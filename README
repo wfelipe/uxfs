@@ -1,6 +1,6 @@
 Based on uxfs, taken from the book "UNIX Filesystems: Evolution, Design, and Implementation", written by Steve D. Pate, from veritas.
 
-The goal is to port this simple filesystem to build of current linux kernels (2.6.22 or later).
+The goal is to port this simple filesystem to build in current linux kernels (2.6.22 or later).
 
 References:
 - http://www.wiley.com/legacy/compbooks/pate/
