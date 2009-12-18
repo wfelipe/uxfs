@@ -80,9 +80,9 @@ int read_inode (ino_t inum, struct ux_inode *uip)
 	{
 		return -1;
 	}
-	lseek(devfd, (UX_INODE_BLOCK * UX_BSIZE) + 
+	lseek (devfd, (UX_INODE_BLOCK * UX_BSIZE) + 
 		(inum * UX_BSIZE), SEEK_SET);
-	read(devfd, (char *) uip, sizeof (struct ux_inode));
+	read (devfd, (char *) uip, sizeof (struct ux_inode));
 
 	return 0;
 }
@@ -94,7 +94,8 @@ int main (int argc, char **argv)
 	ino_t inum;
 
 	devfd = open (argv[1], O_RDWR);
-	if (devfd < 0) {
+	if (devfd < 0)
+	{
 		fprintf (stderr, "uxmkfs: Failed to open device\n");
 		exit (1);
 	}

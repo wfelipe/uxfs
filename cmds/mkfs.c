@@ -87,14 +87,14 @@ int main (int argc, char **argv)
 	for (i = 2 ; i < UX_MAXBLOCKS ; i++)
 		sb.s_block[i] = UX_BLOCK_FREE;
 
-	write(devfd, (char *) &sb, sizeof (struct ux_superblock));
+	write (devfd, (char *) &sb, sizeof (struct ux_superblock));
 
 	/*
 	 * The root directory and lost+found directory inodes
 	 * must be initialized.
 	 */
 
-	time(&tm);
+	time (&tm);
 	memset ((void *) &inode, 0, sizeof (struct ux_inode));
 	inode.i_mode = S_IFDIR | 0755;
 	inode.i_nlink = 3;	/* ".", ".." and "lost+found" */
