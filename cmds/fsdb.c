@@ -35,10 +35,10 @@ void print_inode (int inum, struct ux_inode *uip)
 	printf ("  i_gid      = %d\n", uip->i_gid);
 	printf ("  i_size     = %d\n", uip->i_size);
 	printf ("  i_blocks   = %d", uip->i_blocks);
-	for (i=0 ; i < UX_DIRECT_BLOCKS; i++) {
-		if (i % 4 == 0) {
+	for (i=0 ; i < UX_DIRECT_BLOCKS; i++)
+	{
+		if (i % 4 == 0)
 			printf ("\n");
-		}
 		printf ("  i_addr[%2d] = %3d ", 
 			i, uip->i_addr[i]);
 	}
@@ -47,15 +47,19 @@ void print_inode (int inum, struct ux_inode *uip)
 	 * Print out the directory entries
 	 */
 
-	if (uip->i_mode & S_IFDIR) {
+	if (uip->i_mode & S_IFDIR)
+	{
 		printf ("\n\n  Directory entries:\n");
-		for (i=0 ; i < uip->i_blocks ; i++) {
+		for (i=0 ; i < uip->i_blocks ; i++)
+		{
 			lseek (devfd, uip->i_addr[i] * UX_BSIZE, 
 			      SEEK_SET);
 			read (devfd, buf, UX_BSIZE);
 			dirent = (struct ux_dirent *) buf;
-			for (x = 0 ; x < UX_DIRECT_BLOCKS ; x++) {
-				if (dirent->d_ino != 0) {
+			for (x = 0 ; x < UX_DIRECT_BLOCKS ; x++)
+			{
+				if (dirent->d_ino != 0)
+				{
 					printf ("    inum[%2d],"
 					       "name[%s]\n",
 					       dirent->d_ino, 
@@ -65,14 +69,15 @@ void print_inode (int inum, struct ux_inode *uip)
 			}
 		}
 		printf ("\n");
-	} else {
-		printf ("\n\n");
 	}
+	else
+		printf ("\n\n");
 }
 
 int read_inode (ino_t inum, struct ux_inode *uip)
 {
-	if (sb.s_inode[inum] == UX_INODE_FREE) {
+	if (sb.s_inode[inum] == UX_INODE_FREE)
+	{
 		return -1;
 	}
 	lseek(devfd, (UX_INODE_BLOCK * UX_BSIZE) + 
@@ -99,24 +104,27 @@ int main (int argc, char **argv)
 	 */
 
 	read (devfd, (char *) &sb, sizeof (struct ux_superblock));
-	if (sb.s_magic != UX_MAGIC) {
+	if (sb.s_magic != UX_MAGIC)
+	{
 		printf ("This is not a uxfs filesystem\n");
 		exit (1);
 	}
 
-	while (1) {
-		printf ("uxfsdb > ") ;
+	while (1)
+	{
+		printf ("uxfsdb > ");
 		fflush (stdout);
 		scanf ("%s", command);
-		if (command[0] == 'q') {
+		if (command[0] == 'q')
 			exit (0);
-		}
-		if (command[0] == 'i') {
+		if (command[0] == 'i')
+		{
 			inum = atoi (&command[1]);
 			read_inode (inum, &inode);
 			print_inode (inum, &inode);
 		}
-		if (command[0] == 's') {
+		if (command[0] == 's')
+		{
 			printf ("\nSuperblock contents:\n");
 			printf ("  s_magic   = 0x%x\n", sb.s_magic);
 			printf ("  s_mod     = %s\n",
