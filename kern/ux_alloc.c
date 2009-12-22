@@ -6,7 +6,7 @@
 #include <linux/mm.h>
 #include <linux/slab.h>
 #include <linux/init.h>
-#include <linux/locks.h>
+#include <linux/fs.h>
 #include <linux/smp_lock.h>
 #include <asm/uaccess.h>
 #include "ux_fs.h"

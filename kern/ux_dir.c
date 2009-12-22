@@ -27,7 +27,7 @@ int ux_diradd (struct inode *dip, const char *name, int inum)
 	{
 		bh = sb_bread (sb, uip->i_addr[blk]);
 		dirent = (struct ux_dirent *) bh->b_data;
-		for (i = 0 ; i < UX_DIRS_PER_BLOCK ; i++)
+		for (i = 0; i < UX_DIRS_PER_BLOCK; i++)
 		{
 			if (dirent->d_ino != 0)
 			{
@@ -167,7 +167,8 @@ struct file_operations ux_dir_operations = {
  * allocate a new inode on disk and associate it with the dentry.
  */
 
-int ux_create (struct inode *dip, struct dentry *dentry, int mode)
+int ux_create (struct inode *dip, struct dentry *dentry, int mode,
+	struct nameidata *nd)
 {
 	struct ux_inode *nip;
 	struct super_block *sb = dip->i_sb;
@@ -325,7 +326,7 @@ int ux_rmdir (struct inode *dip, struct dentry *dentry)
 	struct ux_fs *fs = (struct ux_fs *) sb->s_fs_info;
 	struct ux_superblock *usb = fs->u_sb;
 	struct inode *inode = dentry->d_inode;
-	struct ux_inode	 *uip = (struct ux_inode *)
+	struct ux_inode	*uip = (struct ux_inode *)
 		&inode->i_private;
 	int inum, i;
 
@@ -365,17 +366,15 @@ int ux_rmdir (struct inode *dip, struct dentry *dentry)
 }
 
 /*
- * Lookup the specified file. A call is made to iget () to
+ * Lookup the specified file. A call is made to ux_iget () to
  * bring the inode into core.
  */
 
-struct dentry *ux_lookup (struct inode *dip, struct dentry *dentry)
+struct dentry *ux_lookup (struct inode *dip, struct dentry *dentry,
+	struct nameidata *nd)
 {
-	struct ux_inode *uip = (struct ux_inode *)
-		&dip->i_private;
-	struct ux_dirent dirent;
-	struct inode	*inode = NULL;
-	int		 inum;
+	struct inode *inode = NULL;
+	int inum;
 
 	if (dentry->d_name.len > UX_NAMELEN)
 		return ERR_PTR (-ENAMETOOLONG);
@@ -383,9 +382,9 @@ struct dentry *ux_lookup (struct inode *dip, struct dentry *dentry)
 	inum = ux_find_entry (dip, (char *) dentry->d_name.name);
 	if (inum)
 	{
-		inode = iget (dip->i_sb, inum);
+		inode = ux_iget (dip->i_sb, inum);
 		if (!inode)
-			return ERR_PTR (-EACCES);
+			return ERR_CAST (inode);
 	}
 	d_add (dentry, inode);
 	return NULL;

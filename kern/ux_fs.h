@@ -98,6 +98,7 @@ extern __u32 ux_block_alloc (struct super_block *);
 extern int ux_unlink (struct inode *, struct dentry *);
 extern int ux_link (struct dentry *, struct inode *, 
 	struct dentry *);
+struct inode *ux_iget (struct super_block *, unsigned long);
 
 #endif
 
