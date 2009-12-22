@@ -5,6 +5,7 @@
 #include <linux/sched.h>
 #include <linux/string.h>
 #include <linux/fs.h>
+#include <linux/buffer_head.h>
 
 #include "ux_fs.h"
 
@@ -198,9 +199,9 @@ int ux_create (struct inode *dip, struct dentry *dentry, int mode)
 	 */
 
 	dip->i_nlink++;
-	inode->i_uid = current->fsuid;
+	inode->i_uid = current_fsuid ();
 	inode->i_gid = (dip->i_mode & S_ISGID) ?
-		dip->i_gid : current->fsgid;
+		dip->i_gid : current_fsgid ();
 	inode->i_mtime = inode->i_atime =
 		inode->i_ctime = CURRENT_TIME;
 	inode->i_blocks = inode->i_blksize = 0;
