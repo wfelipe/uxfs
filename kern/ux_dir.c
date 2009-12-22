@@ -93,7 +93,7 @@ int ux_dirdel (struct inode *dip, char *name)
 		bh = sb_bread (sb, uip->i_addr[blk]);
 		blk++;
 		dirent = (struct ux_dirent *) bh->b_data;
-		for (i=0 ; i < UX_DIRS_PER_BLOCK ; i++)
+		for (i = 0; i < UX_DIRS_PER_BLOCK; i++)
 		{
 			if (strcmp (dirent->d_name, name) != 0)
 			{
@@ -204,7 +204,6 @@ int ux_create (struct inode *dip, struct dentry *dentry, int mode)
 		dip->i_gid : current_fsgid ();
 	inode->i_mtime = inode->i_atime =
 		inode->i_ctime = CURRENT_TIME;
-	inode->i_blocks = inode->i_blksize = 0;
 	inode->i_op = &ux_file_inops;
 	inode->i_fop = &ux_file_operations;
 	inode->i_mapping->a_ops = &ux_aops;
@@ -216,8 +215,8 @@ int ux_create (struct inode *dip, struct dentry *dentry, int mode)
 	nip = (struct ux_inode *) &inode->i_private;
 	nip->i_mode = mode;
 	nip->i_nlink = 1;
-	nip->i_atime = nip->i_ctime = nip->i_mtime = CURRENT_TIME;
-	nip->i_uid = inode->i_gid;
+	nip->i_atime = nip->i_ctime = nip->i_mtime = CURRENT_TIME.tv_sec;
+	nip->i_uid = inode->i_uid;
 	nip->i_gid = inode->i_gid;
 	nip->i_size = 0;
 	nip->i_blocks = 0;
@@ -263,13 +262,13 @@ int ux_mkdir (struct inode *dip, struct dentry *dentry, int mode)
 	}
 	ux_diradd (dip, (char *) dentry->d_name.name, inum);
 
-	inode->i_uid = current->fsuid;
+	inode->i_uid = current_fsuid ();
 	inode->i_gid = (dip->i_mode & S_ISGID) ? 
-			dip->i_gid : current->fsgid;
+			dip->i_gid : current_fsgid ();
 	inode->i_mtime = inode->i_atime = 
 			inode->i_ctime = CURRENT_TIME;
 	inode->i_blocks = 1;
-	inode->i_blksize = UX_BSIZE;
+//	inode->i_blksize = UX_BSIZE;
 	inode->i_op = &ux_dir_inops;
 	inode->i_fop = &ux_dir_operations;
 	inode->i_mapping->a_ops = &ux_aops;
@@ -282,10 +281,10 @@ int ux_mkdir (struct inode *dip, struct dentry *dentry, int mode)
 	nip->i_mode = mode | S_IFDIR;
 	nip->i_nlink = 2;
 	nip->i_atime = nip->i_ctime 
-		= nip->i_mtime = CURRENT_TIME;
-	nip->i_uid = current->fsuid;
+		= nip->i_mtime = CURRENT_TIME.tv_sec;
+	nip->i_uid = current_fsuid ();
 	nip->i_gid = (dip->i_mode & S_ISGID) ?
-		dip->i_gid : current->fsgid;
+		dip->i_gid : current_fsgid ();
 	nip->i_size = 512;
 	nip->i_blocks = 1;
 	memset (nip->i_addr, 0, 16);
@@ -323,8 +322,7 @@ int ux_mkdir (struct inode *dip, struct dentry *dentry, int mode)
 int ux_rmdir (struct inode *dip, struct dentry *dentry)
 {
 	struct super_block *sb = dip->i_sb;
-	struct ux_fs *fs = (struct ux_fs *)
-		sb->s_private;
+	struct ux_fs *fs = (struct ux_fs *) sb->s_private;
 	struct ux_superblock *usb = fs->u_sb;
 	struct inode *inode = dentry->d_inode;
 	struct ux_inode	 *uip = (struct ux_inode *)
@@ -347,7 +345,7 @@ int ux_rmdir (struct inode *dip, struct dentry *dentry)
 	 * Clean up the inode
 	 */
 
-	for (i=0 ; i<UX_DIRECT_BLOCKS ; i++)
+	for (i = 0; i<UX_DIRECT_BLOCKS; i++)
 	{
 		if (uip->i_addr[i] != 0)
 		{
