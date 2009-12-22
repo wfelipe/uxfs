@@ -322,7 +322,7 @@ int ux_mkdir (struct inode *dip, struct dentry *dentry, int mode)
 int ux_rmdir (struct inode *dip, struct dentry *dentry)
 {
 	struct super_block *sb = dip->i_sb;
-	struct ux_fs *fs = (struct ux_fs *) sb->s_private;
+	struct ux_fs *fs = (struct ux_fs *) sb->s_fs_info;
 	struct ux_superblock *usb = fs->u_sb;
 	struct inode *inode = dentry->d_inode;
 	struct ux_inode	 *uip = (struct ux_inode *)

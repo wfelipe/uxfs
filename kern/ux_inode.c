@@ -146,7 +146,7 @@ void ux_delete_inode (struct inode *inode)
 	unsigned long inum = inode->i_ino;
 	struct ux_inode *uip = (struct ux_inode *) &inode->i_private;
 	struct super_block *sb = inode->i_sb;
-	struct ux_fs *fs = (struct ux_fs *) sb->s_private;
+	struct ux_fs *fs = (struct ux_fs *) sb->s_fs_info;
 	struct ux_superblock *usb = fs->u_sb;
 	int i;
 
@@ -170,7 +170,7 @@ void ux_delete_inode (struct inode *inode)
 
 void ux_put_super (struct super_block *s)
 {
-	struct ux_fs *fs = (struct ux_fs *)s->s_private;
+	struct ux_fs *fs = (struct ux_fs *) s->s_fs_info;
 	struct buffer_head *bh = fs->u_sbh;
 
 	/*
@@ -187,7 +187,7 @@ void ux_put_super (struct super_block *s)
 
 int ux_statfs (struct super_block *sb, struct statfs *buf)
 {
-	struct ux_fs *fs = (struct ux_fs *) sb->s_private;
+	struct ux_fs *fs = (struct ux_fs *) sb->s_fs_info;
 	struct ux_superblock *usb = fs->u_sb;
 
 	buf->f_type = UX_MAGIC;
@@ -211,7 +211,7 @@ int ux_statfs (struct super_block *sb, struct statfs *buf)
 
 void ux_write_super (struct super_block *sb)
 {
-	struct ux_fs *fs = (struct ux_fs *) sb->s_private;
+	struct ux_fs *fs = (struct ux_fs *) sb->s_fs_info;
 	struct buffer_head *bh = fs->u_sbh;
 
 	if (!(sb->s_flags & MS_RDONLY))
@@ -268,7 +268,7 @@ struct super_block * ux_read_super (struct super_block *s,
 		GFP_KERNEL);
 	fs->u_sb = usb;
 	fs->u_sbh = bh;
-	s->s_private = fs;
+	s->s_fs_info = fs;
 
 	s->s_magic = UX_MAGIC;
 	s->s_op = &uxfs_sops;
