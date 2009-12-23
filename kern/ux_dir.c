@@ -156,9 +156,9 @@ start_again:
 }
 
 struct file_operations ux_dir_operations = {
-	.read = generic_read_dir,
-	.readdir = ux_readdir,
-	.fsync = file_fsync,
+	.read		= generic_read_dir,
+	.readdir	= ux_readdir,
+	.fsync		= file_fsync,
 };
 
 /*
@@ -431,11 +431,11 @@ int ux_unlink (struct inode *dip, struct dentry *dentry)
 }
 
 struct inode_operations ux_dir_inops = {
-	.create = ux_create,
-	.lookup = ux_lookup,
-	.mkdir = ux_mkdir,
-	.rmdir = ux_rmdir,
-	.link = ux_link,
-	.unlink = ux_unlink,
+	.create		= ux_create,
+	.lookup		= ux_lookup,
+	.mkdir		= ux_mkdir,
+	.rmdir		= ux_rmdir,
+	.link		= ux_link,
+	.unlink		= ux_unlink,
 };
 

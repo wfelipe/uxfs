@@ -3,22 +3,21 @@
 /*--------------------------------------------------------------*/
 
 #include <linux/fs.h>
-#include <linux/locks.h>
 #include <linux/smp_lock.h>
 #include "ux_fs.h"
 
 struct file_operations ux_file_operations = {
-	.llseek = generic_file_llseek,
-	.read = generic_file_read,
-	.write = generic_file_write,
-	.mmap = generic_file_mmap,
+	.llseek		= generic_file_llseek,
+	.read		= do_sync_read,
+	.write		= do_sync_write,
+	.mmap		= generic_file_mmap,
 };
 
 int ux_get_block (struct inode *inode, long block, 
 	struct buffer_head *bh_result, int create)
 {
 	struct super_block *sb = inode->i_sb;
-	struct ux_fs *fs = (struct ux_fs *) sb->s_private;
+	struct ux_fs *fs = (struct ux_fs *) sb->s_fs_info;
 	struct ux_inode *uip = (struct ux_inode *) &inode->i_private;
    	__u32 blk;
 
@@ -76,16 +75,16 @@ int ux_bmap (struct address_space *mapping, long block)
 }
 
 struct address_space_operations ux_aops = {
-	.readpage = ux_readpage,
-	.writepage = ux_writepage,
-	.sync_page = block_sync_page,
-	.prepare_write = ux_prepare_write,
-	.commit_write = generic_commit_write,
-	.bmap = ux_bmap,
+	.readpage		= ux_readpage,
+	.writepage		= ux_writepage,
+	.sync_page		= block_sync_page,
+	.prepare_write		= ux_prepare_write,
+	.commit_write		= generic_commit_write,
+	.bmap			= ux_bmap,
 };
 
 struct inode_operations ux_file_inops = {
-	.link = ux_link,
-	.unlink = ux_unlink,
+	.link		= ux_link,
+	.unlink		= ux_unlink,
 };
 

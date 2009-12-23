@@ -229,11 +229,11 @@ void ux_write_super (struct super_block *sb)
 }
 
 struct super_operations uxfs_sops = {
-	.write_inode = ux_write_inode,
-	.delete_inode = ux_delete_inode,
-	.put_super = ux_put_super,
-	.write_super = ux_write_super,
-	.statfs = ux_statfs,
+	.write_inode	= ux_write_inode,
+	.delete_inode	= ux_delete_inode,
+	.put_super	= ux_put_super,
+	.write_super	= ux_write_super,
+	.statfs		= ux_statfs,
 };
 
 struct super_block * ux_read_super (struct super_block *s,
