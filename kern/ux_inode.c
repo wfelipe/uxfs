@@ -6,9 +6,10 @@
 #include <linux/mm.h>
 #include <linux/slab.h>
 #include <linux/init.h>
-#include <linux/locks.h>
+#include <linux/fs.h>
 #include <linux/smp_lock.h>
 #include <asm/uaccess.h>
+#include <linux/buffer_head.h>
 #include "ux_fs.h"
 
 MODULE_AUTHOR("Steve Pate <spate@veritas.com>, Wilson Felipe <wfelipe@gmail.com>");
@@ -67,7 +68,7 @@ struct inode *ux_iget (struct super_block *sb, unsigned long ino)
 	if (ino < UX_ROOT_INO || ino > UX_MAXFILES)
 	{
 		printk("uxfs: Bad inode number %lu\n", ino);
-		return;
+		return -EIO;
 	}
 
 	/*
