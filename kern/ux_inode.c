@@ -10,6 +10,7 @@
 #include <linux/smp_lock.h>
 #include <asm/uaccess.h>
 #include <linux/buffer_head.h>
+#include <linux/syscalls.h>
 #include "ux_fs.h"
 
 MODULE_AUTHOR("Steve Pate <spate@veritas.com>, Wilson Felipe <wfelipe@gmail.com>");
@@ -68,7 +69,7 @@ struct inode *ux_iget (struct super_block *sb, unsigned long ino)
 	if (ino < UX_ROOT_INO || ino > UX_MAXFILES)
 	{
 		printk("uxfs: Bad inode number %lu\n", ino);
-		return -EIO;
+		return ERR_PTR(-EIO);
 	}
 
 	/*
@@ -81,7 +82,7 @@ struct inode *ux_iget (struct super_block *sb, unsigned long ino)
 	if (!bh)
 	{
 		printk("Unable to read inode %lu\n", ino);
-		return;
+		return ERR_PTR(-EIO);
 	}
 
 	di = (struct ux_inode *) (bh->b_data);
@@ -104,10 +105,10 @@ struct inode *ux_iget (struct super_block *sb, unsigned long ino)
 	inode->i_nlink = di->i_nlink;
 	inode->i_size = di->i_size;
 	inode->i_blocks = di->i_blocks;
-	inode->i_blksize = UX_BSIZE;
-	inode->i_atime = di->i_atime;
-	inode->i_mtime = di->i_mtime;
-	inode->i_ctime = di->i_ctime;
+	inode->i_blkbits = UX_BSIZE;
+	inode->i_atime.tv_sec = di->i_atime;
+	inode->i_mtime.tv_sec = di->i_mtime;
+	inode->i_ctime.tv_sec = di->i_ctime;
 	memcpy (&inode->i_private, di, sizeof (struct ux_inode));
 
 	brelse(bh);
@@ -136,9 +137,9 @@ void ux_write_inode (struct inode *inode, int unused)
 	bh = sb_bread (inode->i_sb, blk);
 	uip->i_mode = inode->i_mode;
 	uip->i_nlink = inode->i_nlink;
-	uip->i_atime = inode->i_atime;
-	uip->i_mtime = inode->i_mtime;
-	uip->i_ctime = inode->i_ctime;
+	uip->i_atime = inode->i_atime.tv_sec;
+	uip->i_mtime = inode->i_mtime.tv_sec;
+	uip->i_ctime = inode->i_ctime.tv_sec;
 	uip->i_uid = inode->i_uid;
 	uip->i_gid = inode->i_gid;
 	uip->i_size = inode->i_size;
@@ -195,8 +196,9 @@ void ux_put_super (struct super_block *s)
  * This function will be called by the df command.
  */
 
-int ux_statfs (struct super_block *sb, struct statfs *buf)
+int ux_statfs (struct dentry *dentry, struct kstatfs *buf)
 {
+	struct super_block *sb = dentry->d_sb;
 	struct ux_fs *fs = (struct ux_fs *) sb->s_fs_info;
 	struct ux_superblock *usb = fs->u_sb;
 
