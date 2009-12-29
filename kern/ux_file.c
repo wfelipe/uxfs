@@ -38,7 +38,7 @@ int ux_get_block (struct inode *inode,
 		blk = ux_block_alloc (sb);
 		if (blk == 0)
 		{
-			printk("uxfs: ux_get_block - "
+			printk(KERN_ERROR "uxfs: ux_get_block - "
 				"Out of space\n");
 			return -ENOSPC;
 		}

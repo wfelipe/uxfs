@@ -72,7 +72,7 @@ struct inode *ux_iget (struct super_block *sb, unsigned long ino)
 
 	if (ino < UX_ROOT_INO || ino > UX_MAXFILES)
 	{
-		printk("uxfs: Bad inode number %lu\n", ino);
+		printk(KERN_ERR "uxfs: Bad inode number %lu\n", ino);
 		return ERR_PTR(-EIO);
 	}
 
@@ -85,7 +85,7 @@ struct inode *ux_iget (struct super_block *sb, unsigned long ino)
 	bh = sb_bread (inode->i_sb, block);
 	if (!bh)
 	{
-		printk("Unable to read inode %lu\n", ino);
+		printk(KERN_ERR "Unable to read inode %lu\n", ino);
 		return ERR_PTR(-EIO);
 	}
 
@@ -134,7 +134,7 @@ int ux_write_inode (struct inode *inode, int unused)
 
 	if (ino < UX_ROOT_INO || ino > UX_MAXFILES)
 	{
-		printk("uxfs: Bad inode number %lu\n", ino);
+		printk(KERN_ERR "uxfs: Bad inode number %lu\n", ino);
 		return -EIO;
 	}
 	blk = UX_INODE_BLOCK + ino;
@@ -264,12 +264,12 @@ int ux_fill_super (struct super_block *s,
 	if (usb->s_magic != UX_MAGIC)
 	{
 		if (!silent)
-			printk("Unable to find uxfs filesystem\n");
-		return -ENOMEM;
+			printk(KERN_ERR "Unable to find uxfs filesystem\n");
+		return -EINVAL;
 	}
 	if (usb->s_mod == UX_FSDIRTY)
 	{
-		printk("Filesystem is not clean. Write and "
+		printk(KERN_ERR "Filesystem is not clean. Write and "
 			"run fsck!\n");
 		return -ENOMEM;
 	}

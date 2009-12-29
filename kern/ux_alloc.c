@@ -24,7 +24,7 @@ ino_t ux_ialloc (struct super_block *sb)
 
 	if (usb->s_nifree == 0)
 	{
-		printk("uxfs: Out of inodes\n");
+		printk (KERN_WARNING "uxfs: Out of inodes\n");
 		return 0;
 	}
 	for (i = 3; i < UX_MAXFILES; i++)
@@ -36,7 +36,7 @@ ino_t ux_ialloc (struct super_block *sb)
 			return i;
 		}
 	}
-	printk ("uxfs: ux_ialloc - We should never reach here\n");
+	printk (KERN_ERR "uxfs: ux_ialloc - We should never reach here\n");
 	return 0;
 }
 
@@ -53,7 +53,7 @@ __u32 ux_block_alloc (struct super_block *sb)
 
 	if (usb->s_nbfree == 0)
 	{
-		printk("uxfs: Out of space\n");
+		printk (KERN_WARNING "uxfs: Out of space\n");
 		return 0;
 	}
 
@@ -72,7 +72,7 @@ __u32 ux_block_alloc (struct super_block *sb)
 			return UX_FIRST_DATA_BLOCK + i;
 		}
 	}
-	printk ("uxfs: ux_block_alloc - "
+	printk (KERN_ERROR "uxfs: ux_block_alloc - "
 		"We should never reach here\n");
 	return 0;
 }
