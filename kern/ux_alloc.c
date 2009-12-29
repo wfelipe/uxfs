@@ -72,7 +72,7 @@ __u32 ux_block_alloc (struct super_block *sb)
 			return UX_FIRST_DATA_BLOCK + i;
 		}
 	}
-	printk (KERN_ERROR "uxfs: ux_block_alloc - "
+	printk (KERN_ERR "uxfs: ux_block_alloc - "
 		"We should never reach here\n");
 	return 0;
 }
