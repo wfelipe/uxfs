@@ -245,7 +245,7 @@ struct super_operations uxfs_sops = {
 	.statfs		= ux_statfs,
 };
 
-int ux_fill_super (struct super_block *s,
+int ux_fill_super (struct super_block *sb,
 	void *data, int silent)
 {
 	struct ux_superblock *usb;
@@ -253,13 +253,14 @@ int ux_fill_super (struct super_block *s,
 	struct buffer_head *bh;
 	struct inode *inode;
 
-	sb_set_blocksize (s, UX_BSIZE);
-	s->s_blocksize = UX_BSIZE;
-	s->s_blocksize_bits = UX_BSIZE_BITS;
+	sb_set_blocksize (sb, UX_BSIZE);
+	sb->s_blocksize = UX_BSIZE;
+	sb->s_blocksize_bits = UX_BSIZE_BITS;
 
-	bh = sb_bread (s, 0);
+	bh = sb_bread (sb, 0);
 	if(!bh)
 		return -ENOMEM;
+
 	usb = (struct ux_superblock *) bh->b_data;
 	if (usb->s_magic != UX_MAGIC)
 	{
@@ -279,29 +280,29 @@ int ux_fill_super (struct super_block *s,
 	 *  be dirty and write it back to disk.
 	 */
 
-	fs = (struct ux_fs *) kmalloc (sizeof (struct ux_fs),
+	fs = kzalloc (sizeof (struct ux_fs),
 		GFP_KERNEL);
 	fs->u_sb = usb;
 	fs->u_sbh = bh;
-	s->s_fs_info = fs;
+	sb->s_fs_info = fs;
 
-	s->s_magic = UX_MAGIC;
-	s->s_op = &uxfs_sops;
+	sb->s_magic = UX_MAGIC;
+	sb->s_op = &uxfs_sops;
 
-	inode = ux_iget (s, UX_ROOT_INO);
+	inode = ux_iget (sb, UX_ROOT_INO);
 	if (!inode)
 		return -ENOMEM;
-	s->s_root = d_alloc_root (inode);
-	if (!s->s_root)
+	sb->s_root = d_alloc_root (inode);
+	if (!sb->s_root)
 	{
-		iput(inode);
-		return -ENOMEM;
+		iput (inode);
+		return -EINVAL;
 	}
 
-	if (!(s->s_flags & MS_RDONLY))
+	if (!(sb->s_flags & MS_RDONLY))
 	{
 		mark_buffer_dirty (bh);
-		s->s_dirt = 1;
+		sb->s_dirt = 1;
 	} 
 	return 0;
 }
@@ -316,8 +317,7 @@ static struct file_system_type uxfs_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "uxfs",
 	.get_sb		= ux_get_sb,
-	/* TODO
-	.kill_sb	= ..., */
+	.kill_sb	= kill_block_super,
 	.fs_flags	= FS_REQUIRES_DEV,
 };
 
