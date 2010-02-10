@@ -8,8 +8,7 @@ extern struct inode_operations ux_dir_inops;
 extern struct file_operations ux_dir_operations;
 extern struct file_operations ux_file_operations;
 
-
-#define UX_NAMELEN		28	
+#define UX_NAMELEN		28
 #define UX_DIRS_PER_BLOCK	16
 #define UX_DIRECT_BLOCKS	16
 #define UX_MAXFILES		32
@@ -21,8 +20,8 @@ extern struct file_operations ux_file_operations;
 #define UX_INODE_BLOCK		8
 #define UX_ROOT_INO		2
 
-//#define s_private	u.generic_sbp
-//#define i_private	u.generic_ip
+//#define s_private     u.generic_sbp
+//#define i_private     u.generic_ip
 
 /*
  * The on-disk superblock. The number of inodes and 
@@ -91,14 +90,12 @@ struct ux_fs {
 
 #ifdef __KERNEL__
 
-extern ino_t ux_ialloc (struct super_block *);
-extern int ux_find_entry (struct inode *, char *);
-__u32 ux_block_alloc (struct super_block *);
-extern __u32 ux_block_alloc (struct super_block *);
-extern int ux_unlink (struct inode *, struct dentry *);
-extern int ux_link (struct dentry *, struct inode *, 
-	struct dentry *);
-struct inode *ux_iget (struct super_block *, unsigned long);
+extern ino_t ux_ialloc(struct super_block *);
+extern int ux_find_entry(struct inode *, char *);
+__u32 ux_block_alloc(struct super_block *);
+extern __u32 ux_block_alloc(struct super_block *);
+extern int ux_unlink(struct inode *, struct dentry *);
+extern int ux_link(struct dentry *, struct inode *, struct dentry *);
+struct inode *ux_iget(struct super_block *, unsigned long);
 
 #endif
-
