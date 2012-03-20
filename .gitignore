@@ -40,3 +40,4 @@ ncscope.*
 *.orig
 *~
 \#*#
+modules.builtin
