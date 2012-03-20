@@ -1,0 +1,5 @@
+config UXFS_FS
+	tristate "uxfs"
+	depends on EXPERIMENTAL
+	help
+	  uxfs help
