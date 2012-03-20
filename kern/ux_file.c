@@ -4,7 +4,6 @@
 
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
-#include <linux/smp_lock.h>
 #include "ux_fs.h"
 
 struct file_operations ux_file_operations = {
@@ -65,8 +64,7 @@ int ux_write_begin(struct file *file, struct address_space *mapping,
 		   loff_t pos, unsigned len, unsigned flags,
 		   struct page **pagep, void **fsdata)
 {
-	return block_write_begin(file, mapping, pos, len, flags, pagep, fsdata,
-				 ux_get_block);
+	return block_write_begin(file->f_mapping, pos, len, flags, pagep, ux_get_block);
 }
 
 sector_t ux_bmap(struct address_space * mapping, sector_t block)
@@ -77,7 +75,6 @@ sector_t ux_bmap(struct address_space * mapping, sector_t block)
 struct address_space_operations ux_aops = {
 	.readpage = ux_readpage,
 	.writepage = ux_writepage,
-	.sync_page = block_sync_page,
 	.write_begin = ux_write_begin,
 	.write_end = generic_write_end,
 	.bmap = ux_bmap,

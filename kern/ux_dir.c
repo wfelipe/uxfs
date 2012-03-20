@@ -94,7 +94,7 @@ int ux_dirdel(struct inode *dip, char *name)
 				dirent->d_ino = 0;
 				dirent->d_name[0] = '\0';
 				mark_buffer_dirty(bh);
-				dip->i_nlink--;
+				inode_dec_link_count(dip);
 				mark_inode_dirty(dip);
 				break;
 			}
@@ -143,7 +143,7 @@ int ux_readdir(struct file *filp, void *dirent, filldir_t filldir)
 struct file_operations ux_dir_operations = {
 	.read = generic_read_dir,
 	.readdir = ux_readdir,
-	.fsync = file_fsync,
+	.fsync = noop_fsync,
 };
 
 /*
@@ -152,7 +152,7 @@ struct file_operations ux_dir_operations = {
  * allocate a new inode on disk and associate it with the dentry.
  */
 
-int ux_create(struct inode *dip, struct dentry *dentry, int mode,
+int ux_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 	      struct nameidata *nd)
 {
 	struct ux_inode *nip;
@@ -183,7 +183,7 @@ int ux_create(struct inode *dip, struct dentry *dentry, int mode,
 	 * Increment the parent link count and intialize the inode.
 	 */
 
-	dip->i_nlink++;
+	inode_inc_link_count(inode);
 	inode->i_uid = current_fsuid();
 	inode->i_gid = (dip->i_mode & S_ISGID) ? dip->i_gid : current_fsgid();
 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
@@ -191,7 +191,7 @@ int ux_create(struct inode *dip, struct dentry *dentry, int mode,
 	inode->i_fop = &ux_file_operations;
 	inode->i_mapping->a_ops = &ux_aops;
 	inode->i_mode = mode;
-	inode->i_nlink = 1;
+	set_nlink(inode, 1);
 	inode->i_ino = inum;
 	insert_inode_hash(inode);
 
@@ -216,7 +216,7 @@ int ux_create(struct inode *dip, struct dentry *dentry, int mode,
  * so must create the directory and instantiate it.
  */
 
-int ux_mkdir(struct inode *dip, struct dentry *dentry, int mode)
+int ux_mkdir(struct inode *dip, struct dentry *dentry, umode_t mode)
 {
 	struct ux_inode *nip;
 	struct buffer_head *bh;
@@ -255,7 +255,7 @@ int ux_mkdir(struct inode *dip, struct dentry *dentry, int mode)
 	inode->i_mode = mode | S_IFDIR;
 	inode->i_ino = inum;
 	inode->i_size = UX_BSIZE;
-	inode->i_nlink = 2;
+	set_nlink(inode, 2);
 
 	nip = (struct ux_inode *)&inode->i_private;
 	nip->i_mode = mode | S_IFDIR;
@@ -288,7 +288,7 @@ int ux_mkdir(struct inode *dip, struct dentry *dentry, int mode)
 	 * Increment the link count of the parent directory.
 	 */
 
-	dip->i_nlink++;
+	inode_inc_link_count(dip);
 	mark_inode_dirty(dip);
 	return 0;
 }
@@ -383,7 +383,7 @@ int ux_link(struct dentry *old, struct inode *dip, struct dentry *new)
 	 * Increment the link count of the target inode
 	 */
 
-	inode->i_nlink++;
+	inode_inc_link_count(inode);
 	mark_inode_dirty(inode);
 	atomic_inc(&inode->i_count);
 	d_instantiate(new, inode);
@@ -399,7 +399,7 @@ int ux_unlink(struct inode *dip, struct dentry *dentry)
 	struct inode *inode = dentry->d_inode;
 
 	ux_dirdel(dip, (char *)dentry->d_name.name);
-	inode->i_nlink--;
+	inode_dec_link_count(inode);
 	mark_inode_dirty(inode);
 	return 0;
 }

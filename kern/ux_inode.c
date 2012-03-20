@@ -8,7 +8,6 @@
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/statfs.h>
-#include <linux/smp_lock.h>
 #include <asm/uaccess.h>
 #include <linux/buffer_head.h>
 #include <linux/syscalls.h>
@@ -99,7 +98,7 @@ struct inode *ux_iget(struct super_block *sb, unsigned long ino)
 	}
 	inode->i_uid = di->i_uid;
 	inode->i_gid = di->i_gid;
-	inode->i_nlink = di->i_nlink;
+	set_nlink(inode, di->i_nlink);
 	inode->i_size = di->i_size;
 	inode->i_blocks = di->i_blocks;
 	inode->i_blkbits = UX_BSIZE;
@@ -118,7 +117,7 @@ struct inode *ux_iget(struct super_block *sb, unsigned long ino)
  * This function is called to write a dirty inode to disk.
  */
 
-int ux_write_inode(struct inode *inode, int unused)
+int ux_write_inode(struct inode *inode, struct writeback_control *wbc)
 {
 	unsigned long ino = inode->i_ino;
 	struct ux_inode *uip = (struct ux_inode *)&inode->i_private;
@@ -167,7 +166,7 @@ void ux_delete_inode(struct inode *inode)
 	usb->s_inode[inum] = UX_INODE_FREE;
 	usb->s_nifree++;
 	sb->s_dirt = 1;
-	clear_inode(inode);
+	//clear_inode(inode);
 }
 
 /*
@@ -230,7 +229,7 @@ void ux_write_super(struct super_block *sb)
 
 struct super_operations uxfs_sops = {
 	.write_inode = ux_write_inode,
-	.delete_inode = ux_delete_inode,
+	.destroy_inode = ux_delete_inode,
 	.put_super = ux_put_super,
 	.write_super = ux_write_super,
 	.statfs = ux_statfs,
@@ -292,17 +291,16 @@ int ux_fill_super(struct super_block *sb, void *data, int silent)
 	return 0;
 }
 
-static int ux_get_sb(struct file_system_type *fs_type,
-		     int flags, const char *dev_name, void *data,
-		     struct vfsmount *mnt)
+static struct dentry *ux_mount(struct file_system_type *fs_type,
+		    int flags, const char *dev_name, void *data)
 {
-	return get_sb_bdev(fs_type, flags, dev_name, data, ux_fill_super, mnt);
+	return mount_bdev(fs_type, flags, dev_name, data, ux_fill_super);
 }
 
 static struct file_system_type uxfs_fs_type = {
 	.owner = THIS_MODULE,
 	.name = "uxfs",
-	.get_sb = ux_get_sb,
+	.mount = ux_mount,
 	.kill_sb = kill_block_super,
 	.fs_flags = FS_REQUIRES_DEV,
 };
