@@ -15,7 +15,7 @@
 #include "ux_fs.h"
 
 MODULE_AUTHOR
-    ("Steve Pate <spate@veritas.com>, Wilson Felipe <wfelipe@gmail.com>");
+("Steve Pate <spate@veritas.com>, Wilson Felipe <wfelipe@gmail.com>");
 MODULE_DESCRIPTION("A primitive filesystem for Linux");
 MODULE_LICENSE("GPL");
 
@@ -292,7 +292,7 @@ int ux_fill_super(struct super_block *sb, void *data, int silent)
 }
 
 static struct dentry *ux_mount(struct file_system_type *fs_type,
-		    int flags, const char *dev_name, void *data)
+			       int flags, const char *dev_name, void *data)
 {
 	return mount_bdev(fs_type, flags, dev_name, data, ux_fill_super);
 }
@@ -316,4 +316,4 @@ static void __exit exit_uxfs_fs(void)
 }
 
 module_init(init_uxfs_fs)
-    module_exit(exit_uxfs_fs)
+module_exit(exit_uxfs_fs)
