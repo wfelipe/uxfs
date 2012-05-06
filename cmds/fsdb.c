@@ -11,15 +11,15 @@
 #include <time.h>
 #include <linux/fs.h>
 #include <linux/types.h>
-#include "../kern/ux_fs.h"
+#include "../kern/uxfs.h"
 
-struct ux_superblock sb;
+struct uxfs_superblock sb;
 int devfd;
 
-void print_inode(int inum, struct ux_inode *uip)
+void print_inode(int inum, struct uxfs_inode *uip)
 {
-	char buf[UX_BSIZE];
-	struct ux_dirent *dirent;
+	char buf[UXFS_BSIZE];
+	struct uxfs_dirent *dirent;
 	int i, x;
 
 	printf("\ninode number %d\n", inum);
@@ -32,7 +32,7 @@ void print_inode(int inum, struct ux_inode *uip)
 	printf("  i_gid      = %d\n", uip->i_gid);
 	printf("  i_size     = %d\n", uip->i_size);
 	printf("  i_blocks   = %d", uip->i_blocks);
-	for (i = 0; i < UX_DIRECT_BLOCKS; i++) {
+	for (i = 0; i < UXFS_DIRECT_BLOCKS; i++) {
 		if (i % 4 == 0)
 			printf("\n");
 		printf("  i_addr[%2d] = %3d ", i, uip->i_addr[i]);
@@ -45,10 +45,10 @@ void print_inode(int inum, struct ux_inode *uip)
 	if (uip->i_mode & S_IFDIR) {
 		printf("\n\n  Directory entries:\n");
 		for (i = 0; i < uip->i_blocks; i++) {
-			lseek(devfd, uip->i_addr[i] * UX_BSIZE, SEEK_SET);
-			read(devfd, buf, UX_BSIZE);
-			dirent = (struct ux_dirent *)buf;
-			for (x = 0; x < UX_DIRECT_BLOCKS; x++) {
+			lseek(devfd, uip->i_addr[i] * UXFS_BSIZE, SEEK_SET);
+			read(devfd, buf, UXFS_BSIZE);
+			dirent = (struct uxfs_dirent *)buf;
+			for (x = 0; x < UXFS_DIRECT_BLOCKS; x++) {
 				if (dirent->d_ino != 0) {
 					printf("    inum[%2d],"
 					       "name[%s]\n",
@@ -62,20 +62,20 @@ void print_inode(int inum, struct ux_inode *uip)
 		printf("\n\n");
 }
 
-int read_inode(ino_t inum, struct ux_inode *uip)
+int read_inode(ino_t inum, struct uxfs_inode *uip)
 {
-	if (sb.s_inode[inum] == UX_INODE_FREE) {
+	if (sb.s_inode[inum] == UXFS_INODE_FREE) {
 		return -1;
 	}
-	lseek(devfd, (UX_INODE_BLOCK * UX_BSIZE) + (inum * UX_BSIZE), SEEK_SET);
-	read(devfd, (char *)uip, sizeof(struct ux_inode));
+	lseek(devfd, (UXFS_INODE_BLOCK * UXFS_BSIZE) + (inum * UXFS_BSIZE), SEEK_SET);
+	read(devfd, (char *)uip, sizeof(struct uxfs_inode));
 
 	return 0;
 }
 
 int main(int argc, char **argv)
 {
-	struct ux_inode inode;
+	struct uxfs_inode inode;
 	char command[512];
 	ino_t inum;
 
@@ -89,8 +89,8 @@ int main(int argc, char **argv)
 	 * Read in and validate the superblock
 	 */
 
-	read(devfd, (char *)&sb, sizeof(struct ux_superblock));
-	if (sb.s_magic != UX_MAGIC) {
+	read(devfd, (char *)&sb, sizeof(struct uxfs_superblock));
+	if (sb.s_magic != UXFS_MAGIC) {
 		printf("This is not a uxfs filesystem\n");
 		exit(1);
 	}
@@ -110,8 +110,8 @@ int main(int argc, char **argv)
 			printf("\nSuperblock contents:\n");
 			printf("  s_magic   = 0x%x\n", sb.s_magic);
 			printf("  s_mod     = %s\n",
-			       (sb.s_mod == UX_FSCLEAN) ?
-			       "UX_FSCLEAN" : "UX_FSDIRTY");
+			       (sb.s_mod == UXFS_FSCLEAN) ?
+			       "UXFS_FSCLEAN" : "UXFS_FSDIRTY");
 			printf("  s_nifree  = %d\n", sb.s_nifree);
 			printf("  s_nbfree  = %d\n\n", sb.s_nbfree);
 		}

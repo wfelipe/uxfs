@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -g -O0 -Wall
-headers = ../kern/ux_fs.h
+headers = ../kern/uxfs.h
 objects = mkfs.o fsdb.o
 
 all: mkfs fsdb
