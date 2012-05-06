@@ -1,18 +1,17 @@
 /*--------------------------------------------------------------*/
-/*--------------------------- ux_inode.c -----------------------*/
+/*--------------------------- uxfs_inode.c -----------------------*/
 /*--------------------------------------------------------------*/
 
 #include <linux/module.h>
-#include <linux/mm.h>
+#include <linux/fs.h>
 #include <linux/slab.h>
 #include <linux/init.h>
-#include <linux/fs.h>
 #include <linux/statfs.h>
 #include <asm/uaccess.h>
 #include <linux/buffer_head.h>
 #include <linux/syscalls.h>
 #include <linux/kdev_t.h>
-#include "ux_fs.h"
+#include "uxfs.h"
 
 MODULE_AUTHOR
 ("Steve Pate <spate@veritas.com>, Wilson Felipe <wfelipe@gmail.com>");
@@ -24,18 +23,18 @@ MODULE_LICENSE("GPL");
  * If found the inode number is returned.
  */
 
-int ux_find_entry(struct inode *dip, char *name)
+int uxfs_find_entry(struct inode *dip, char *name)
 {
-	struct ux_inode *uip = (struct ux_inode *)&dip->i_private;
+	struct uxfs_inode_info *uxi = uxfs_i(dip);
 	struct super_block *sb = dip->i_sb;
 	struct buffer_head *bh = NULL;
-	struct ux_dirent *dirent;
+	struct uxfs_dirent *dirent;
 	int i, blk = 0;
 
-	for (blk = 0; blk < uip->i_blocks; blk++) {
-		bh = sb_bread(sb, uip->i_addr[blk]);
-		dirent = (struct ux_dirent *)bh->b_data;
-		for (i = 0; i < UX_DIRS_PER_BLOCK; i++) {
+	for (blk = 0; blk < uxi->uip.i_blocks; blk++) {
+		bh = sb_bread(sb, uxi->uip.i_addr[blk]);
+		dirent = (struct uxfs_dirent *)bh->b_data;
+		for (i = 0; i < UXFS_DIRS_PER_BLOCK; i++) {
 			if (strcmp(dirent->d_name, name) == 0) {
 				brelse(bh);
 				return dirent->d_ino;
@@ -50,14 +49,14 @@ int ux_find_entry(struct inode *dip, char *name)
 }
 
 /*
- * This function is called in response to an ux_iget(). For 
- * example, we call ux_iget() from ux_lookup().
+ * This function is called in response to an uxfs_iget(). For 
+ * example, we call uxfs_iget() from uxfs_lookup().
  */
 
-struct inode *ux_iget(struct super_block *sb, unsigned long ino)
+struct inode *uxfs_iget(struct super_block *sb, unsigned long ino)
 {
 	struct buffer_head *bh;
-	struct ux_inode *di;
+	struct uxfs_inode *di;
 	struct inode *inode;
 	int block;
 
@@ -67,7 +66,7 @@ struct inode *ux_iget(struct super_block *sb, unsigned long ino)
 	if (!(inode->i_state & I_NEW))
 		return inode;
 
-	if (ino < UX_ROOT_INO || ino > UX_MAXFILES) {
+	if (ino < UXFS_ROOT_INO || ino > UXFS_MAXFILES) {
 		printk(KERN_ERR "uxfs: Bad inode number %lu\n", ino);
 		return ERR_PTR(-EIO);
 	}
@@ -77,35 +76,35 @@ struct inode *ux_iget(struct super_block *sb, unsigned long ino)
 	 * inode per block!
 	 */
 
-	block = UX_INODE_BLOCK + ino;
+	block = UXFS_INODE_BLOCK + ino;
 	bh = sb_bread(inode->i_sb, block);
 	if (!bh) {
 		printk(KERN_ERR "Unable to read inode %lu\n", ino);
 		return ERR_PTR(-EIO);
 	}
 
-	di = (struct ux_inode *)(bh->b_data);
+	di = (struct uxfs_inode *)(bh->b_data);
 	inode->i_mode = di->i_mode;
 	if (di->i_mode & S_IFDIR) {
 		inode->i_mode |= S_IFDIR;
-		inode->i_op = &ux_dir_inops;
-		inode->i_fop = &ux_dir_operations;
+		inode->i_op = &uxfs_dir_inops;
+		inode->i_fop = &uxfs_dir_operations;
 	} else if (di->i_mode & S_IFREG) {
 		inode->i_mode |= S_IFREG;
-		inode->i_op = &ux_file_inops;
-		inode->i_fop = &ux_file_operations;
-		inode->i_mapping->a_ops = &ux_aops;
+		inode->i_op = &uxfs_file_inops;
+		inode->i_fop = &uxfs_file_operations;
+		inode->i_mapping->a_ops = &uxfs_aops;
 	}
 	inode->i_uid = di->i_uid;
 	inode->i_gid = di->i_gid;
 	set_nlink(inode, di->i_nlink);
 	inode->i_size = di->i_size;
 	inode->i_blocks = di->i_blocks;
-	inode->i_blkbits = UX_BSIZE;
+	inode->i_blkbits = UXFS_BSIZE;
 	inode->i_atime.tv_sec = di->i_atime;
 	inode->i_mtime.tv_sec = di->i_mtime;
 	inode->i_ctime.tv_sec = di->i_ctime;
-	memcpy(&inode->i_private, di, sizeof(struct ux_inode));
+	memcpy(&inode->i_private, di, sizeof(struct uxfs_inode));
 
 	brelse(bh);
 
@@ -117,28 +116,28 @@ struct inode *ux_iget(struct super_block *sb, unsigned long ino)
  * This function is called to write a dirty inode to disk.
  */
 
-int ux_write_inode(struct inode *inode, struct writeback_control *wbc)
+int uxfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 {
 	unsigned long ino = inode->i_ino;
-	struct ux_inode *uip = (struct ux_inode *)&inode->i_private;
+	struct uxfs_inode_info *uxi = uxfs_i(inode);
 	struct buffer_head *bh;
 	__u32 blk;
 
-	if (ino < UX_ROOT_INO || ino > UX_MAXFILES) {
+	if (ino < UXFS_ROOT_INO || ino > UXFS_MAXFILES) {
 		printk(KERN_ERR "uxfs: Bad inode number %lu\n", ino);
 		return -EIO;
 	}
-	blk = UX_INODE_BLOCK + ino;
+	blk = UXFS_INODE_BLOCK + ino;
 	bh = sb_bread(inode->i_sb, blk);
-	uip->i_mode = inode->i_mode;
-	uip->i_nlink = inode->i_nlink;
-	uip->i_atime = inode->i_atime.tv_sec;
-	uip->i_mtime = inode->i_mtime.tv_sec;
-	uip->i_ctime = inode->i_ctime.tv_sec;
-	uip->i_uid = inode->i_uid;
-	uip->i_gid = inode->i_gid;
-	uip->i_size = inode->i_size;
-	memcpy(bh->b_data, uip, sizeof(struct ux_inode));
+	uxi->uip.i_mode = inode->i_mode;
+	uxi->uip.i_nlink = inode->i_nlink;
+	uxi->uip.i_atime = inode->i_atime.tv_sec;
+	uxi->uip.i_mtime = inode->i_mtime.tv_sec;
+	uxi->uip.i_ctime = inode->i_ctime.tv_sec;
+	uxi->uip.i_uid = inode->i_uid;
+	uxi->uip.i_gid = inode->i_gid;
+	uxi->uip.i_size = inode->i_size;
+	memcpy(bh->b_data, &uxi->uip, sizeof(struct uxfs_inode));
 	mark_buffer_dirty(bh);
 	brelse(bh);
 
@@ -149,21 +148,21 @@ int ux_write_inode(struct inode *inode, struct writeback_control *wbc)
  * This function gets called when the link count goes to zero.
  */
 
-void ux_delete_inode(struct inode *inode)
+void uxfs_destroy_inode(struct inode *inode)
 {
 	unsigned long inum = inode->i_ino;
-	struct ux_inode *uip = (struct ux_inode *)&inode->i_private;
+	struct uxfs_inode_info *uxi = uxfs_i(inode);
 	struct super_block *sb = inode->i_sb;
-	struct ux_fs *fs = (struct ux_fs *)sb->s_fs_info;
-	struct ux_superblock *usb = fs->u_sb;
+	struct uxfs_fs *fs = (struct uxfs_fs *)sb->s_fs_info;
+	struct uxfs_superblock *usb = fs->u_sb;
 	int i;
 
-	usb->s_nbfree += uip->i_blocks;
-	for (i = 0; i < uip->i_blocks; i++) {
-		usb->s_block[uip->i_addr[i]] = UX_BLOCK_FREE;
-		uip->i_addr[i] = UX_BLOCK_FREE;
+	usb->s_nbfree += uxi->uip.i_blocks;
+	for (i = 0; i < uxi->uip.i_blocks; i++) {
+		usb->s_block[uxi->uip.i_addr[i]] = UXFS_BLOCK_FREE;
+		uxi->uip.i_addr[i] = UXFS_BLOCK_FREE;
 	}
-	usb->s_inode[inum] = UX_INODE_FREE;
+	usb->s_inode[inum] = UXFS_INODE_FREE;
 	usb->s_nifree++;
 	sb->s_dirt = 1;
 	//clear_inode(inode);
@@ -171,17 +170,17 @@ void ux_delete_inode(struct inode *inode)
 
 /*
  * This function is called when the filesystem is being 
- * unmounted. We free the ux_fs structure allocated during 
- * ux_get_sb() and free the superblock buffer_head.
+ * unmounted. We free the uxfs_fs structure allocated during 
+ * uxfs_get_sb() and free the superblock buffer_head.
  */
 
-void ux_put_super(struct super_block *s)
+void uxfs_put_super(struct super_block *s)
 {
-	struct ux_fs *fs = (struct ux_fs *)s->s_fs_info;
+	struct uxfs_fs *fs = (struct uxfs_fs *)s->s_fs_info;
 	struct buffer_head *bh = fs->u_sbh;
 
 	/*
-	 * Free the ux_fs structure allocated by ux_get_sb
+	 * Free the uxfs_fs structure allocated by uxfs_get_sb
 	 */
 
 	kfree(fs);
@@ -192,21 +191,21 @@ void ux_put_super(struct super_block *s)
  * This function will be called by the df command.
  */
 
-int ux_statfs(struct dentry *dentry, struct kstatfs *buf)
+int uxfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 {
 	struct super_block *sb = dentry->d_sb;
-	struct ux_fs *fs = (struct ux_fs *)sb->s_fs_info;
-	struct ux_superblock *usb = fs->u_sb;
+	struct uxfs_fs *fs = (struct uxfs_fs *)sb->s_fs_info;
+	struct uxfs_superblock *usb = fs->u_sb;
 
-	buf->f_type = UX_MAGIC;
-	buf->f_bsize = UX_BSIZE;
-	buf->f_blocks = UX_MAXBLOCKS;
+	buf->f_type = UXFS_MAGIC;
+	buf->f_bsize = UXFS_BSIZE;
+	buf->f_blocks = UXFS_MAXBLOCKS;
 	buf->f_bfree = usb->s_nbfree;
 	buf->f_bavail = usb->s_nbfree;
-	buf->f_files = UX_MAXFILES;
+	buf->f_files = UXFS_MAXFILES;
 	buf->f_ffree = usb->s_nifree;
 	buf->f_fsid.val[0] = sb->s_dev;
-	buf->f_namelen = UX_NAMELEN;
+	buf->f_namelen = UXFS_NAMELEN;
 
 	return 0;
 }
@@ -217,9 +216,9 @@ int ux_statfs(struct dentry *dentry, struct kstatfs *buf)
  * in-core superblock to 0 to prevent further unnecessary calls.
  */
 
-void ux_write_super(struct super_block *sb)
+void uxfs_write_super(struct super_block *sb)
 {
-	struct ux_fs *fs = (struct ux_fs *)sb->s_fs_info;
+	struct uxfs_fs *fs = (struct uxfs_fs *)sb->s_fs_info;
 	struct buffer_head *bh = fs->u_sbh;
 
 	if (!(sb->s_flags & MS_RDONLY))
@@ -227,36 +226,49 @@ void ux_write_super(struct super_block *sb)
 	sb->s_dirt = 0;
 }
 
+static struct kmem_cache *uxfs_inode_cachep;
+
+struct inode *uxfs_alloc_inode(struct super_block *sb)
+{
+	struct uxfs_inode_info *ui;
+
+	ui = (struct uxfs_inode_info *) kmem_cache_alloc(uxfs_inode_cachep, GFP_KERNEL);
+
+	return &ui->vfs_inode;
+}
+
 struct super_operations uxfs_sops = {
-	.write_inode = ux_write_inode,
-	.destroy_inode = ux_delete_inode,
-	.put_super = ux_put_super,
-	.write_super = ux_write_super,
-	.statfs = ux_statfs,
+	.write_inode = uxfs_write_inode,
+	.destroy_inode = uxfs_destroy_inode,
+	.put_super = uxfs_put_super,
+	.write_super = uxfs_write_super,
+	.statfs = uxfs_statfs,
+	.alloc_inode = uxfs_alloc_inode,
 };
 
-int ux_fill_super(struct super_block *sb, void *data, int silent)
+int uxfs_fill_super(struct super_block *sb, void *data, int silent)
 {
-	struct ux_superblock *usb;
-	struct ux_fs *fs;
+	struct uxfs_superblock *usb;
+	struct uxfs_fs *fs;
 	struct buffer_head *bh;
 	struct inode *inode;
 
-	sb_set_blocksize(sb, UX_BSIZE);
-	sb->s_blocksize = UX_BSIZE;
-	sb->s_blocksize_bits = UX_BSIZE_BITS;
-
+	sb_set_blocksize(sb, (sizeof(struct uxfs_superblock)/512 + 1) * UXFS_BSIZE);
 	bh = sb_bread(sb, 0);
 	if (!bh)
 		return -ENOMEM;
 
-	usb = (struct ux_superblock *)bh->b_data;
-	if (usb->s_magic != UX_MAGIC) {
+	sb_set_blocksize(sb, UXFS_BSIZE);
+	sb->s_blocksize = UXFS_BSIZE;
+	sb->s_blocksize_bits = UXFS_BSIZE_BITS;
+
+	usb = (struct uxfs_superblock *)bh->b_data;
+	if (usb->s_magic != UXFS_MAGIC) {
 		if (!silent)
 			printk(KERN_ERR "Unable to find uxfs filesystem\n");
 		return -EINVAL;
 	}
-	if (usb->s_mod == UX_FSDIRTY) {
+	if (usb->s_mod == UXFS_FSDIRTY) {
 		printk(KERN_ERR "Filesystem is not clean. Write and "
 		       "run fsck!\n");
 		return -ENOMEM;
@@ -267,18 +279,18 @@ int ux_fill_super(struct super_block *sb, void *data, int silent)
 	 *  be dirty and write it back to disk.
 	 */
 
-	fs = kzalloc(sizeof(struct ux_fs), GFP_KERNEL);
+	fs = kzalloc(sizeof(struct uxfs_fs), GFP_KERNEL);
 	fs->u_sb = usb;
 	fs->u_sbh = bh;
 	sb->s_fs_info = fs;
 
-	sb->s_magic = UX_MAGIC;
+	sb->s_magic = UXFS_MAGIC;
 	sb->s_op = &uxfs_sops;
 
-	inode = ux_iget(sb, UX_ROOT_INO);
+	inode = uxfs_iget(sb, UXFS_ROOT_INO);
 	if (!inode)
 		return -ENOMEM;
-	sb->s_root = d_alloc_root(inode);
+	sb->s_root = d_make_root(inode);
 	if (!sb->s_root) {
 		iput(inode);
 		return -EINVAL;
@@ -291,22 +303,34 @@ int ux_fill_super(struct super_block *sb, void *data, int silent)
 	return 0;
 }
 
-static struct dentry *ux_mount(struct file_system_type *fs_type,
+static struct dentry *uxfs_mount(struct file_system_type *fs_type,
 			       int flags, const char *dev_name, void *data)
 {
-	return mount_bdev(fs_type, flags, dev_name, data, ux_fill_super);
+	return mount_bdev(fs_type, flags, dev_name, data, uxfs_fill_super);
 }
 
 static struct file_system_type uxfs_fs_type = {
 	.owner = THIS_MODULE,
 	.name = "uxfs",
-	.mount = ux_mount,
+	.mount = uxfs_mount,
 	.kill_sb = kill_block_super,
 	.fs_flags = FS_REQUIRES_DEV,
 };
 
+static void init_once(void *foo)
+{
+	struct uxfs_inode_info *ei = (struct uxfs_inode_info *) foo;
+
+	inode_init_once(&ei->vfs_inode);
+}
+
 static int __init init_uxfs_fs(void)
 {
+	uxfs_inode_cachep = kmem_cache_create("uxfs_inode_cache",
+					      sizeof(struct uxfs_inode_info),
+					      0, (SLAB_RECLAIM_ACCOUNT|
+						  SLAB_MEM_SPREAD),
+					      init_once);
 	return register_filesystem(&uxfs_fs_type);
 }
 

@@ -1,30 +1,30 @@
 /*--------------------------------------------------------------*/
-/*--------------------------- ux_file.c ------------------------*/
+/*--------------------------- uxfs_file.c ------------------------*/
 /*--------------------------------------------------------------*/
 
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
-#include "ux_fs.h"
+#include "uxfs.h"
 
-struct file_operations ux_file_operations = {
+struct file_operations uxfs_file_operations = {
 	.llseek = generic_file_llseek,
 	.read = do_sync_read,
 	.write = do_sync_write,
 	.mmap = generic_file_mmap,
 };
 
-int ux_get_block(struct inode *inode,
+int uxfs_get_block(struct inode *inode,
 		 sector_t iblock, struct buffer_head *bh_result, int create)
 {
 	struct super_block *sb = inode->i_sb;
-	struct ux_inode *uip = (struct ux_inode *)&inode->i_private;
+	struct uxfs_inode *uip = (struct uxfs_inode *)&inode->i_private;
 	__u32 blk;
 
 	/*
 	 * First check to see is the file can be extended.
 	 */
 
-	if (iblock >= UX_DIRECT_BLOCKS)
+	if (iblock >= UXFS_DIRECT_BLOCKS)
 		return -EFBIG;
 
 	/*
@@ -32,9 +32,9 @@ int ux_get_block(struct inode *inode,
 	 */
 
 	if (create) {
-		blk = ux_block_alloc(sb);
+		blk = uxfs_block_alloc(sb);
 		if (blk == 0) {
-			printk(KERN_ERR "uxfs: ux_get_block - "
+			printk(KERN_ERR "uxfs: uxfs_get_block - "
 			       "Out of space\n");
 			return -ENOSPC;
 		}
@@ -50,37 +50,37 @@ int ux_get_block(struct inode *inode,
 	return 0;
 }
 
-int ux_writepage(struct page *page, struct writeback_control *wbc)
+int uxfs_writepage(struct page *page, struct writeback_control *wbc)
 {
-	return block_write_full_page(page, ux_get_block, wbc);
+	return block_write_full_page(page, uxfs_get_block, wbc);
 }
 
-int ux_readpage(struct file *file, struct page *page)
+int uxfs_readpage(struct file *file, struct page *page)
 {
-	return block_read_full_page(page, ux_get_block);
+	return block_read_full_page(page, uxfs_get_block);
 }
 
-int ux_write_begin(struct file *file, struct address_space *mapping,
+int uxfs_write_begin(struct file *file, struct address_space *mapping,
 		   loff_t pos, unsigned len, unsigned flags,
 		   struct page **pagep, void **fsdata)
 {
-	return block_write_begin(file->f_mapping, pos, len, flags, pagep, ux_get_block);
+	return block_write_begin(file->f_mapping, pos, len, flags, pagep, uxfs_get_block);
 }
 
-sector_t ux_bmap(struct address_space * mapping, sector_t block)
+sector_t uxfs_bmap(struct address_space * mapping, sector_t block)
 {
-	return generic_block_bmap(mapping, block, ux_get_block);
+	return generic_block_bmap(mapping, block, uxfs_get_block);
 }
 
-struct address_space_operations ux_aops = {
-	.readpage = ux_readpage,
-	.writepage = ux_writepage,
-	.write_begin = ux_write_begin,
+struct address_space_operations uxfs_aops = {
+	.readpage = uxfs_readpage,
+	.writepage = uxfs_writepage,
+	.write_begin = uxfs_write_begin,
 	.write_end = generic_write_end,
-	.bmap = ux_bmap,
+	.bmap = uxfs_bmap,
 };
 
-struct inode_operations ux_file_inops = {
-	.link = ux_link,
-	.unlink = ux_unlink,
+struct inode_operations uxfs_file_inops = {
+	.link = uxfs_link,
+	.unlink = uxfs_unlink,
 };

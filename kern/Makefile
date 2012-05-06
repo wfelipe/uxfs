@@ -1,6 +1,6 @@
 obj-$(CONFIG_UXFS_FS) = uxfs.o
 
-uxfs-y := ux_dir.o ux_alloc.o ux_file.o ux_inode.o
+uxfs-y := uxfs_dir.o uxfs_alloc.o uxfs_file.o uxfs_inode.o
 
 KDIR = /lib/modules/$(shell uname -r)/build
 PWD = $(shell pwd)
