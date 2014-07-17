@@ -41,6 +41,15 @@ int main(int argc, char **argv)
 	}
 	lseek(devfd, 0, SEEK_SET);
 
+	/*added to initialize every block on the device to 0 before writing anything to the device*/
+
+	for(i=0; i<UXFS_MAXBLOCKS; i++){
+	  write(devfd, (char *)&sb, sizeof(struct uxfs_superblock) );
+	  lseek(devfd, i*UXFS_BSIZE, SEEK_SET);
+	}
+
+	lseek(devfd, 0, SEEK_SET);
+
 	/*
 	 * Fill in the fields of the superblock and write
 	 * it out to the first block of the device.
@@ -148,7 +157,7 @@ int main(int argc, char **argv)
 	memset((void *)&block, 0, UXFS_BSIZE);
 	write(devfd, block, UXFS_BSIZE);
 	lseek(devfd, UXFS_FIRST_DATA_BLOCK * UXFS_BSIZE + UXFS_BSIZE, SEEK_SET);
-	dir.d_ino = 2;
+	dir.d_ino = 3; //THIS IS INODE 3, NOT 2
 	strcpy(dir.d_name, ".");
 	write(devfd, (char *)&dir, sizeof(struct uxfs_dirent));
 	dir.d_ino = 2;
