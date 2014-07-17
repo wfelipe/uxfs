@@ -290,7 +290,7 @@ int uxfs_fill_super(struct super_block *sb, void *data, int silent)
 	inode = uxfs_iget(sb, UXFS_ROOT_INO);
 	if (!inode)
 		return -ENOMEM;
-	sb->s_root = d_make_root(inode);
+	sb->s_root = d_alloc_root(inode); //changed from d_make_root(inode) for kernel version 3.2
 	if (!sb->s_root) {
 		iput(inode);
 		return -EINVAL;
