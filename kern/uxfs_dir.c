@@ -16,7 +16,7 @@
 int uxfs_diradd(struct inode *dip, const char *name, int inum)
 {
 	struct uxfs_inode *uip = (struct uxfs_inode *)
-	    &dip->i_private;
+	    dip->i_private;
 	struct buffer_head *bh;
 	struct super_block *sb = dip->i_sb;
 	struct uxfs_dirent *dirent;
@@ -75,7 +75,7 @@ int uxfs_diradd(struct inode *dip, const char *name, int inum)
 int uxfs_dirdel(struct inode *dip, char *name)
 {
 	struct uxfs_inode *uip = (struct uxfs_inode *)
-	    &dip->i_private;
+	  dip->i_private;
 	struct buffer_head *bh;
 	struct super_block *sb = dip->i_sb;
 	struct uxfs_dirent *dirent;
@@ -109,7 +109,7 @@ int uxfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 	unsigned long pos;
 	struct inode *inode = filp->f_dentry->d_inode;
 	struct uxfs_inode *uip = (struct uxfs_inode *)
-	    &inode->i_private;
+	  inode->i_private;
 	struct uxfs_dirent *udir;
 	struct buffer_head *bh;
 	__u32 blk;
@@ -195,7 +195,10 @@ int uxfs_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 	inode->i_ino = inum;
 	insert_inode_hash(inode);
 
-	nip = (struct uxfs_inode *)&inode->i_private;
+	//need to set i_private
+	inode->i_private = uxfs_i(inode);
+
+	nip = (struct uxfs_inode *)inode->i_private;
 	nip->i_mode = mode;
 	nip->i_nlink = 1;
 	nip->i_atime = nip->i_ctime = nip->i_mtime = CURRENT_TIME.tv_sec;
@@ -257,7 +260,7 @@ int uxfs_mkdir(struct inode *dip, struct dentry *dentry, umode_t mode)
 	inode->i_size = UXFS_BSIZE;
 	set_nlink(inode, 2);
 
-	nip = (struct uxfs_inode *)&inode->i_private;
+	nip = (struct uxfs_inode *)inode->i_private;
 	nip->i_mode = mode | S_IFDIR;
 	nip->i_nlink = 2;
 	nip->i_atime = nip->i_ctime = nip->i_mtime = CURRENT_TIME.tv_sec;
@@ -304,7 +307,7 @@ int uxfs_rmdir(struct inode *dip, struct dentry *dentry)
 	struct uxfs_superblock *usb = fs->u_sb;
 	struct inode *inode = dentry->d_inode;
 	struct uxfs_inode *uip = (struct uxfs_inode *)
-	    &inode->i_private;
+	    inode->i_private;
 	int inum, i;
 
 	if (inode->i_nlink > 2)

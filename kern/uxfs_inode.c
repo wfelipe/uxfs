@@ -104,7 +104,8 @@ struct inode *uxfs_iget(struct super_block *sb, unsigned long ino)
 	inode->i_atime.tv_sec = di->i_atime;
 	inode->i_mtime.tv_sec = di->i_mtime;
 	inode->i_ctime.tv_sec = di->i_ctime;
-	memcpy(&inode->i_private, di, sizeof(struct uxfs_inode));
+	inode->i_private = uxfs_i(inode);
+	memcpy(inode->i_private, di, sizeof(struct uxfs_inode));
 
 	brelse(bh);
 
