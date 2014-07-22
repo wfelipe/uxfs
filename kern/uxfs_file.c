@@ -9,8 +9,11 @@
 struct file_operations uxfs_file_operations = {
 	.llseek = generic_file_llseek,
 	.read = do_sync_read,
+	.aio_read = generic_file_aio_read, //added
 	.write = do_sync_write,
+	.aio_write = generic_file_aio_write, //added
 	.mmap = generic_file_mmap,
+	.splice_read = generic_file_splice_read, //added
 };
 
 int uxfs_get_block(struct inode *inode,
