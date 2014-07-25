@@ -258,6 +258,7 @@ int uxfs_mkdir(struct inode *dip, struct dentry *dentry, umode_t mode)
 	inode->i_mode = mode | S_IFDIR;
 	inode->i_ino = inum;
 	inode->i_size = UXFS_BSIZE;
+	inode->i_private = uxfs_i(inode); //initialize private, again!
 	set_nlink(inode, 2);
 
 	nip = (struct uxfs_inode *)inode->i_private;
@@ -268,7 +269,7 @@ int uxfs_mkdir(struct inode *dip, struct dentry *dentry, umode_t mode)
 	nip->i_gid = (dip->i_mode & S_ISGID) ? dip->i_gid : current_fsgid();
 	nip->i_size = 512;
 	nip->i_blocks = 1;
-	memset(nip->i_addr, 0, 16);
+	memset(nip->i_addr, 0, UXFS_DIRECT_BLOCKS);
 
 	blk = uxfs_block_alloc(sb);
 	nip->i_addr[0] = blk;

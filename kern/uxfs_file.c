@@ -5,16 +5,37 @@
 #include <linux/fs.h>
 #include <linux/buffer_head.h>
 #include "uxfs.h"
-
+#include <linux/aio.h>
+ssize_t uxfs_file_aio_write(struct kiocb*, const struct iovec*, unsigned long, loff_t);
+ssize_t uxfs_do_sync_write(struct file *, const char __user *, size_t, loff_t *);
 struct file_operations uxfs_file_operations = {
 	.llseek = generic_file_llseek,
 	.read = do_sync_read,
 	.aio_read = generic_file_aio_read, //added
-	.write = do_sync_write,
-	.aio_write = generic_file_aio_write, //added
+	.write = do_sync_write, //do_sync_write,
+	.aio_write = uxfs_file_aio_write, //added
 	.mmap = generic_file_mmap,
 	.splice_read = generic_file_splice_read, //added
 };
+
+ssize_t uxfs_file_aio_write(struct kiocb *iocb, const struct iovec *iov, unsigned long nr_segs, loff_t pos){
+  // iocb->ki_filp->f_flags |= O_DIRECT;
+  return generic_file_aio_write(iocb, iov, nr_segs, pos);
+}
+
+ssize_t uxfs_do_sync_write(struct file *filp, const char __user *buf, size_t len, loff_t *ppos){
+  /* printk("\n",); */
+  /* printk("\n",); */
+  /* printk("\n",); */
+  /* printk("\n",); */
+  /* printk("\n",); */
+  /* printk("\n",); */
+  /* printk("\n",); */
+  /* printk("\n",); */
+  /* printk("\n",); */
+  for(;;){}
+  return do_sync_write(filp,buf,len,ppos);
+}
 
 int uxfs_get_block(struct inode *inode,
 		 sector_t iblock, struct buffer_head *bh_result, int create)
