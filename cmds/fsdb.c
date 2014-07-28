@@ -69,7 +69,7 @@ void print_inode(int inum, struct uxfs_inode *uip)
 int read_inode(ino_t inum, struct uxfs_inode *uip)
 {
 	if (sb.s_inode[inum] == UXFS_INODE_FREE) {
-		return -1;
+	  printf("WARNING: INODE LISTED AS FREE IN SB\n");
 	}
 	lseek(devfd, (UXFS_INODE_BLOCK * UXFS_BSIZE) + (inum * UXFS_BSIZE), SEEK_SET);
 	read(devfd, (char *)uip, sizeof(struct uxfs_inode));
@@ -82,6 +82,7 @@ int main(int argc, char **argv)
 	struct uxfs_inode inode;
 	char command[512];
 	ino_t inum;
+	char dataText[512];
 
 	devfd = open(argv[1], O_RDWR);
 	if (devfd < 0) {
@@ -118,6 +119,16 @@ int main(int argc, char **argv)
 			       "UXFS_FSCLEAN" : "UXFS_FSDIRTY");
 			printf("  s_nifree  = %d\n", sb.s_nifree);
 			printf("  s_nbfree  = %d\n\n", sb.s_nbfree);
+		}
+		if (command[0] == 'd') {
+		  inum = atoi(&command[1]);
+		  printf("block number requested: %d\n", inum);
+		  lseek(devfd, inum * UXFS_BSIZE, SEEK_SET);
+		  read(devfd, &dataText, UXFS_BSIZE);
+		  if(!dataText[0])
+		    printf("Data block empty\n");
+		  else
+		    printf("Data: \n %s \n", dataText);
 		}
 	}
 }

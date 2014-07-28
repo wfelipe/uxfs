@@ -124,6 +124,8 @@ int uxfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 	struct buffer_head *bh;
 	__u32 blk;
 
+	printk("uxfs_write_inode %lu\n", ino); //debugging
+
 	if (ino < UXFS_ROOT_INO || ino > UXFS_MAXFILES) {
 		printk(KERN_ERR "uxfs: Bad inode number %lu\n", ino);
 		return -EIO;
@@ -232,9 +234,9 @@ static struct kmem_cache *uxfs_inode_cachep;
 struct inode *uxfs_alloc_inode(struct super_block *sb)
 {
 	struct uxfs_inode_info *ui;
+	char* uip;
 
 	ui = (struct uxfs_inode_info *) kmem_cache_alloc(uxfs_inode_cachep, GFP_KERNEL);
-
 	return &ui->vfs_inode;
 }
 

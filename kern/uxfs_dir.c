@@ -178,7 +178,8 @@ int uxfs_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 		return -ENOSPC;
 	}
 	uxfs_diradd(dip, (char *)dentry->d_name.name, inum);
-
+	
+	printk("uxfs_create %s\n", dentry->d_name.name); //debugging
 	/*
 	 * Increment the parent link count and intialize the inode.
 	 */
@@ -206,7 +207,7 @@ int uxfs_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 	nip->i_gid = inode->i_gid;
 	nip->i_size = 0;
 	nip->i_blocks = 0;
-	memset(nip->i_addr, 0, UXFS_DIRECT_BLOCKS);
+	memset(nip->i_addr, 0, UXFS_DIRECT_BLOCKS*sizeof(nip->i_addr[0]));
 
 	d_instantiate(dentry, inode);
 	mark_inode_dirty(dip);
@@ -269,7 +270,7 @@ int uxfs_mkdir(struct inode *dip, struct dentry *dentry, umode_t mode)
 	nip->i_gid = (dip->i_mode & S_ISGID) ? dip->i_gid : current_fsgid();
 	nip->i_size = 512;
 	nip->i_blocks = 1;
-	memset(nip->i_addr, 0, UXFS_DIRECT_BLOCKS);
+	memset(nip->i_addr, 0, UXFS_DIRECT_BLOCKS * sizeof(nip->i_addr[0]));
 
 	blk = uxfs_block_alloc(sb);
 	nip->i_addr[0] = blk;
