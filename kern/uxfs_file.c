@@ -24,16 +24,6 @@ ssize_t uxfs_file_aio_write(struct kiocb *iocb, const struct iovec *iov, unsigne
 }
 
 ssize_t uxfs_do_sync_write(struct file *filp, const char __user *buf, size_t len, loff_t *ppos){
-  /* printk("\n",); */
-  /* printk("\n",); */
-  /* printk("\n",); */
-  /* printk("\n",); */
-  /* printk("\n",); */
-  /* printk("\n",); */
-  /* printk("\n",); */
-  /* printk("\n",); */
-  /* printk("\n",); */
-  for(;;){}
   return do_sync_write(filp,buf,len,ppos);
 }
 
@@ -88,6 +78,7 @@ int uxfs_write_begin(struct file *file, struct address_space *mapping,
 		   loff_t pos, unsigned len, unsigned flags,
 		   struct page **pagep, void **fsdata)
 {
+  printk("this is uxfs_write_begin file->f_mapping->host->i_bdev: %p\n" , file->f_mapping->host->i_bdev);
 	return block_write_begin(file->f_mapping, pos, len, flags, pagep, uxfs_get_block);
 }
 

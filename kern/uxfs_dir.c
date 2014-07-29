@@ -179,12 +179,11 @@ int uxfs_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 	}
 	uxfs_diradd(dip, (char *)dentry->d_name.name, inum);
 	
-	printk("uxfs_create %s\n", dentry->d_name.name); //debugging
 	/*
 	 * Increment the parent link count and intialize the inode.
 	 */
 
-	inode_inc_link_count(inode);
+	//inode_inc_link_count(inode); //what are you for? to break the code
 	inode->i_uid = current_fsuid();
 	inode->i_gid = (dip->i_mode & S_ISGID) ? dip->i_gid : current_fsgid();
 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
@@ -194,7 +193,6 @@ int uxfs_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 	inode->i_mode = mode;
 	set_nlink(inode, 1);
 	inode->i_ino = inum;
-	insert_inode_hash(inode);
 
 	//need to set i_private
 	inode->i_private = uxfs_i(inode);
@@ -209,8 +207,9 @@ int uxfs_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 	nip->i_blocks = 0;
 	memset(nip->i_addr, 0, UXFS_DIRECT_BLOCKS*sizeof(nip->i_addr[0]));
 
+	insert_inode_hash(inode); //moved from above
 	d_instantiate(dentry, inode);
-	mark_inode_dirty(dip);
+	//	mark_inode_dirty(dip); //why are you here?
 	mark_inode_dirty(inode);
 	return 0;
 }

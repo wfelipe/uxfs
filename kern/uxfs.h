@@ -12,7 +12,7 @@ extern struct file_operations uxfs_file_operations;
 #define UXFS_DIRS_PER_BLOCK	16
 #define UXFS_DIRECT_BLOCKS	16
 #define UXFS_MAXFILES		32
-#define UXFS_MAXBLOCKS		470
+#define UXFS_MAXBLOCKS		460 //changed from 470 as an experiment...
 #define UXFS_FIRST_DATA_BLOCK	50
 #define UXFS_BSIZE		512
 #define UXFS_BSIZE_BITS		9
@@ -29,12 +29,12 @@ extern struct file_operations uxfs_file_operations;
  */
 
 struct uxfs_superblock {
-	__u32 s_magic;
-	__u32 s_mod;
-	__u32 s_nifree;
-	__u32 s_inode[UXFS_MAXFILES];
-	__u32 s_nbfree;
-	__u32 s_block[UXFS_MAXBLOCKS];
+  __u32 s_magic;
+  __u32 s_mod;
+  __u32 s_nifree;
+  char s_inode[UXFS_MAXFILES]; //changed to char from __u32
+  __u32 s_nbfree;
+  char s_block[UXFS_MAXBLOCKS]; //changed to char from __u32
 };
 
 /*
