@@ -161,7 +161,7 @@ void uxfs_destroy_inode(struct inode *inode)
 
 	usb->s_nbfree += uxi->uip.i_blocks;
 	for (i = 0; i < uxi->uip.i_blocks; i++) {
-		usb->s_block[uxi->uip.i_addr[i]] = UXFS_BLOCK_FREE;
+		usb->s_block[uxi->uip.i_addr[i]-UXFS_FIRST_DATA_BLOCK] = UXFS_BLOCK_FREE;
 		uxi->uip.i_addr[i] = UXFS_BLOCK_FREE;
 	}
 	usb->s_inode[inum] = UXFS_INODE_FREE;
@@ -223,10 +223,9 @@ void uxfs_write_super(struct super_block *sb)
 	struct uxfs_fs *fs = (struct uxfs_fs *)sb->s_fs_info;
 	struct buffer_head *bh = fs->u_sbh;
 
-	if (!(sb->s_flags & MS_RDONLY)){
-	  printk("Calling mark_buffer_dirty from uxfs_write_super\n");
+	if (!(sb->s_flags & MS_RDONLY))
 	  mark_buffer_dirty(bh);
-	}
+
 	sb->s_dirt = 0;
 }
 
@@ -293,9 +292,9 @@ int uxfs_fill_super(struct super_block *sb, void *data, int silent)
 	inode = uxfs_iget(sb, UXFS_ROOT_INO);
 	if (!inode)
 		return -ENOMEM;
-	sb->s_root = d_alloc_root(inode); //changed from d_make_root(inode) for kernel version 3.2
-	if (!sb->s_root) {
-		iput(inode);
+	sb->s_root = d_alloc_root(inode); //changed from d_make_root(inode) for kernel version 3.2. change back to d_alloc_root for kernal versions > 3.4
+	if (!sb->s_root) {  
+	  iput(inode); //redundant line of code if d_make_root is used
 		return -EINVAL;
 	}
 

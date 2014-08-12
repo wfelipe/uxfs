@@ -6,26 +6,16 @@
 #include <linux/buffer_head.h>
 #include "uxfs.h"
 #include <linux/aio.h>
-ssize_t uxfs_file_aio_write(struct kiocb*, const struct iovec*, unsigned long, loff_t);
-ssize_t uxfs_do_sync_write(struct file *, const char __user *, size_t, loff_t *);
+
 struct file_operations uxfs_file_operations = {
 	.llseek = generic_file_llseek,
 	.read = do_sync_read,
-	.aio_read = generic_file_aio_read, //added
-	.write = do_sync_write, //do_sync_write,
-	.aio_write = uxfs_file_aio_write, //added
+	.aio_read = generic_file_aio_read, //added 
+	.write = do_sync_write, 
+	.aio_write = generic_file_aio_write, //added
 	.mmap = generic_file_mmap,
 	.splice_read = generic_file_splice_read, //added
 };
-
-ssize_t uxfs_file_aio_write(struct kiocb *iocb, const struct iovec *iov, unsigned long nr_segs, loff_t pos){
-  // iocb->ki_filp->f_flags |= O_DIRECT;
-  return generic_file_aio_write(iocb, iov, nr_segs, pos);
-}
-
-ssize_t uxfs_do_sync_write(struct file *filp, const char __user *buf, size_t len, loff_t *ppos){
-  return do_sync_write(filp,buf,len,ppos);
-}
 
 int uxfs_get_block(struct inode *inode,
 		 sector_t iblock, struct buffer_head *bh_result, int create)
@@ -57,7 +47,7 @@ int uxfs_get_block(struct inode *inode,
 		uip->i_size = inode->i_size;
 		mark_inode_dirty(inode);
 	}
-	bh_result->b_bdev = inode->i_bdev;
+	bh_result->b_bdev = sb->s_bdev; //changed from inode->i_bdev (which was null and stupid)
 	bh_result->b_blocknr = uip->i_addr[iblock];
 	bh_result->b_state |= (1UL << BH_Mapped);
 
@@ -78,7 +68,6 @@ int uxfs_write_begin(struct file *file, struct address_space *mapping,
 		   loff_t pos, unsigned len, unsigned flags,
 		   struct page **pagep, void **fsdata)
 {
-  printk("this is uxfs_write_begin file->f_mapping->host->i_bdev: %p\n" , file->f_mapping->host->i_bdev);
 	return block_write_begin(file->f_mapping, pos, len, flags, pagep, uxfs_get_block);
 }
 

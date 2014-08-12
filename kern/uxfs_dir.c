@@ -33,8 +33,8 @@ int uxfs_diradd(struct inode *dip, const char *name, int inum)
 			} else {
 				dirent->d_ino = inum;
 				strcpy(dirent->d_name, name);
-				mark_buffer_dirty(bh);
-				mark_inode_dirty(dip);
+				mark_buffer_dirty(bh); 
+				mark_inode_dirty(dip); //this shouldn't be necessary...
 				brelse(bh);
 				return 0;
 			}
@@ -93,9 +93,9 @@ int uxfs_dirdel(struct inode *dip, char *name)
 			} else {
 				dirent->d_ino = 0;
 				dirent->d_name[0] = '\0';
-				mark_buffer_dirty(bh);
+				mark_buffer_dirty(bh); //unnecessary??
 				inode_dec_link_count(dip);
-				mark_inode_dirty(dip);
+				//	mark_inode_dirty(dip); redundant
 				break;
 			}
 		}
@@ -183,7 +183,7 @@ int uxfs_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 	 * Increment the parent link count and intialize the inode.
 	 */
 
-	//inode_inc_link_count(inode); //what are you for? to break the code
+	//inode_inc_link_count(inode); //this method breaks the fs. setting n_link later works correctly
 	inode->i_uid = current_fsuid();
 	inode->i_gid = (dip->i_mode & S_ISGID) ? dip->i_gid : current_fsgid();
 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
@@ -209,7 +209,7 @@ int uxfs_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 
 	insert_inode_hash(inode); //moved from above
 	d_instantiate(dentry, inode);
-	//	mark_inode_dirty(dip); //why are you here?
+	//	mark_inode_dirty(dip); //this does not belong here
 	mark_inode_dirty(inode);
 	return 0;
 }
@@ -404,7 +404,7 @@ int uxfs_unlink(struct inode *dip, struct dentry *dentry)
 
 	uxfs_dirdel(dip, (char *)dentry->d_name.name);
 	inode_dec_link_count(inode);
-	mark_inode_dirty(inode);
+	mark_inode_dirty(inode); //more redundancy,
 	return 0;
 }
 

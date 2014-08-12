@@ -12,11 +12,11 @@ extern struct file_operations uxfs_file_operations;
 #define UXFS_DIRS_PER_BLOCK	16
 #define UXFS_DIRECT_BLOCKS	16
 #define UXFS_MAXFILES		32
-#define UXFS_MAXBLOCKS		460 //changed from 470 as an experiment...
+#define UXFS_MAXBLOCKS		460 //changed to 460 so the superblock is not bigger than a block
 #define UXFS_FIRST_DATA_BLOCK	50
 #define UXFS_BSIZE		512
 #define UXFS_BSIZE_BITS		9
-#define UXFS_MAGIC		0x58494e55
+#define UXFS_MAGIC		0x58494e55 // UNIX
 #define UXFS_INODE_BLOCK		8
 #define UXFS_ROOT_INO		2
 
@@ -28,7 +28,7 @@ extern struct file_operations uxfs_file_operations;
  * data blocks is fixed.
  */
 
-struct uxfs_superblock {
+struct uxfs_superblock { //made smaller using chars so it fits in a block
   __u32 s_magic;
   __u32 s_mod;
   __u32 s_nifree;
