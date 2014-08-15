@@ -52,7 +52,7 @@ void print_inode(int inum, struct uxfs_inode *uip)
 			lseek(devfd, uip->i_addr[i] * UXFS_BSIZE,
 			      SEEK_SET);
 			read(devfd, buf, UXFS_BSIZE);
-			dirent = (struct uxfs_dirent *) buf;
+			dirent = (struct uxfs_dirent *)buf;
 			for (x = 0; x < UXFS_DIRECT_BLOCKS; x++) {
 				if (dirent->d_ino != 0) {
 					printf("    inum[%2d],"
@@ -75,7 +75,7 @@ int read_inode(ino_t inum, struct uxfs_inode *uip)
 	}
 	lseek(devfd, (UXFS_INODE_BLOCK * UXFS_BSIZE) + (inum * UXFS_BSIZE),
 	      SEEK_SET);
-	read(devfd, (char *) uip, sizeof(struct uxfs_inode));
+	read(devfd, (char *)uip, sizeof(struct uxfs_inode));
 
 	return 0;
 }
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 	 * Read in and validate the superblock
 	 */
 
-	read(devfd, (char *) &sb, sizeof(struct uxfs_superblock));
+	read(devfd, (char *)&sb, sizeof(struct uxfs_superblock));
 	if (sb.s_magic != UXFS_MAGIC) {
 		printf("This is not a uxfs filesystem\n");
 		exit(1);

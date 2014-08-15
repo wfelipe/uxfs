@@ -22,7 +22,7 @@ int uxfs_get_block(struct inode *inode,
 		   int create)
 {
 	struct super_block *sb = inode->i_sb;
-	struct uxfs_inode *uip = (struct uxfs_inode *) inode->i_private;
+	struct uxfs_inode *uip = (struct uxfs_inode *)inode->i_private;
 	__u32 blk;
 
 	/*

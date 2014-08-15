@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	lseek(devfd, 0, SEEK_SET);
 
 	/*added to initialize every block on the device to 0 before writing anything to the device */
-	memset((void *) &block, 0, UXFS_BSIZE);
+	memset((void *)&block, 0, UXFS_BSIZE);
 	for (i = 0; i < UXFS_MAXBLOCKS; i++) {
 		write(devfd, block, UXFS_BSIZE);
 	}
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 	for (i = 2; i < UXFS_MAXBLOCKS; i++)
 		sb.s_block[i] = UXFS_BLOCK_FREE;
 
-	write(devfd, (char *) &sb, sizeof(struct uxfs_superblock));
+	write(devfd, (char *)&sb, sizeof(struct uxfs_superblock));
 
 	/*
 	 * The root directory and lost+found directory inodes
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 	 */
 
 	time(&tm);
-	memset((void *) &inode, 0, sizeof(struct uxfs_inode));
+	memset((void *)&inode, 0, sizeof(struct uxfs_inode));
 	inode.i_mode = S_IFDIR | 0755;
 	inode.i_nlink = 3;	/* ".", ".." and "lost+found" */
 	inode.i_atime = tm;
@@ -114,9 +114,9 @@ int main(int argc, char **argv)
 
 	lseek(devfd, (UXFS_INODE_BLOCK + UXFS_ROOT_INO) * UXFS_BSIZE,
 	      SEEK_SET);
-	write(devfd, (char *) &inode, sizeof(struct uxfs_inode));
+	write(devfd, (char *)&inode, sizeof(struct uxfs_inode));
 
-	memset((void *) &inode, 0, sizeof(struct uxfs_inode));
+	memset((void *)&inode, 0, sizeof(struct uxfs_inode));
 	inode.i_mode = S_IFDIR | 0755;
 	inode.i_nlink = 2;	/* "." and ".." */
 	inode.i_atime = tm;
@@ -130,25 +130,25 @@ int main(int argc, char **argv)
 
 	lseek(devfd, (UXFS_INODE_BLOCK + UXFS_ROOT_INO + 1) * UXFS_BSIZE,
 	      SEEK_SET);
-	write(devfd, (char *) &inode, sizeof(struct uxfs_inode));
+	write(devfd, (char *)&inode, sizeof(struct uxfs_inode));
 
 	/*
 	 * Fill in the directory entries for root 
 	 */
 
 	lseek(devfd, UXFS_FIRST_DATA_BLOCK * UXFS_BSIZE, SEEK_SET);
-	memset((void *) &block, 0, UXFS_BSIZE);
+	memset((void *)&block, 0, UXFS_BSIZE);
 	write(devfd, block, UXFS_BSIZE);
 	lseek(devfd, UXFS_FIRST_DATA_BLOCK * UXFS_BSIZE, SEEK_SET);
 	dir.d_ino = 2;
 	strcpy(dir.d_name, ".");
-	write(devfd, (char *) &dir, sizeof(struct uxfs_dirent));
+	write(devfd, (char *)&dir, sizeof(struct uxfs_dirent));
 	dir.d_ino = 2;
 	strcpy(dir.d_name, "..");
-	write(devfd, (char *) &dir, sizeof(struct uxfs_dirent));
+	write(devfd, (char *)&dir, sizeof(struct uxfs_dirent));
 	dir.d_ino = 3;
 	strcpy(dir.d_name, "lost+found");
-	write(devfd, (char *) &dir, sizeof(struct uxfs_dirent));
+	write(devfd, (char *)&dir, sizeof(struct uxfs_dirent));
 
 	/*
 	 * Fill in the directory entries for lost+found 
@@ -156,16 +156,16 @@ int main(int argc, char **argv)
 
 	lseek(devfd, UXFS_FIRST_DATA_BLOCK * UXFS_BSIZE + UXFS_BSIZE,
 	      SEEK_SET);
-	memset((void *) &block, 0, UXFS_BSIZE);
+	memset((void *)&block, 0, UXFS_BSIZE);
 	write(devfd, block, UXFS_BSIZE);
 	lseek(devfd, UXFS_FIRST_DATA_BLOCK * UXFS_BSIZE + UXFS_BSIZE,
 	      SEEK_SET);
 	dir.d_ino = 3;		//THIS IS INODE 3, NOT 2
 	strcpy(dir.d_name, ".");
-	write(devfd, (char *) &dir, sizeof(struct uxfs_dirent));
+	write(devfd, (char *)&dir, sizeof(struct uxfs_dirent));
 	dir.d_ino = 2;
 	strcpy(dir.d_name, "..");
-	write(devfd, (char *) &dir, sizeof(struct uxfs_dirent));
+	write(devfd, (char *)&dir, sizeof(struct uxfs_dirent));
 
 	return 0;
 }

@@ -25,7 +25,7 @@ int uxfs_diradd(struct inode *dip, const char *name, int inum)
 
 	for (blk = 0; blk < uip->i_blocks; blk++) {
 		bh = sb_bread(sb, uip->i_addr[blk]);
-		dirent = (struct uxfs_dirent *) bh->b_data;
+		dirent = (struct uxfs_dirent *)bh->b_data;
 		for (i = 0; i < UXFS_DIRS_PER_BLOCK; i++) {
 			if (dirent->d_ino != 0) {
 				dirent++;
@@ -58,7 +58,7 @@ int uxfs_diradd(struct inode *dip, const char *name, int inum)
 		bh = sb_bread(sb, blk);
 		memset(bh->b_data, 0, UXFS_BSIZE);
 		mark_inode_dirty(dip);
-		dirent = (struct uxfs_dirent *) bh->b_data;
+		dirent = (struct uxfs_dirent *)bh->b_data;
 		dirent->d_ino = inum;
 		strcpy(dirent->d_name, name);
 		mark_buffer_dirty(bh);
@@ -85,7 +85,7 @@ int uxfs_dirdel(struct inode *dip, char *name)
 	while (blk < uip->i_blocks) {
 		bh = sb_bread(sb, uip->i_addr[blk]);
 		blk++;
-		dirent = (struct uxfs_dirent *) bh->b_data;
+		dirent = (struct uxfs_dirent *)bh->b_data;
 		for (i = 0; i < UXFS_DIRS_PER_BLOCK; i++) {
 			if (strcmp(dirent->d_name, name) != 0) {
 				dirent++;
@@ -121,7 +121,7 @@ int uxfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 	blk = (pos + 1) / UXFS_BSIZE;
 	blk = uip->i_addr[blk];
 	bh = sb_bread(inode->i_sb, blk);
-	udir = (struct uxfs_dirent *) (bh->b_data + pos % UXFS_BSIZE);
+	udir = (struct uxfs_dirent *)(bh->b_data + pos % UXFS_BSIZE);
 
 	/*
 	 * Skip over 'null' directory entries.
@@ -167,7 +167,7 @@ int uxfs_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 	 * entry to the directory.
 	 */
 
-	inum = uxfs_find_entry(dip, (char *) dentry->d_name.name);
+	inum = uxfs_find_entry(dip, (char *)dentry->d_name.name);
 	if (inum)
 		return -EEXIST;
 	inode = new_inode(sb);
@@ -178,7 +178,7 @@ int uxfs_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 		iput(inode);
 		return -ENOSPC;
 	}
-	uxfs_diradd(dip, (char *) dentry->d_name.name, inum);
+	uxfs_diradd(dip, (char *)dentry->d_name.name, inum);
 
 	/*
 	 * Increment the parent link count and intialize the inode.
@@ -199,7 +199,7 @@ int uxfs_create(struct inode *dip, struct dentry *dentry, umode_t mode,
 	//need to set i_private
 	inode->i_private = uxfs_i(inode);
 
-	nip = (struct uxfs_inode *) inode->i_private;
+	nip = (struct uxfs_inode *)inode->i_private;
 	nip->i_mode = mode;
 	nip->i_nlink = 1;
 	nip->i_atime = nip->i_ctime = nip->i_mtime = CURRENT_TIME.tv_sec;
@@ -237,7 +237,7 @@ int uxfs_mkdir(struct inode *dip, struct dentry *dentry, umode_t mode)
 	 * allocate one, a new inode and new incore inode.
 	 */
 
-	inum = uxfs_find_entry(dip, (char *) dentry->d_name.name);
+	inum = uxfs_find_entry(dip, (char *)dentry->d_name.name);
 	if (inum)
 		return -EEXIST;
 	inode = new_inode(sb);
@@ -248,7 +248,7 @@ int uxfs_mkdir(struct inode *dip, struct dentry *dentry, umode_t mode)
 		iput(inode);
 		return -ENOSPC;
 	}
-	uxfs_diradd(dip, (char *) dentry->d_name.name, inum);
+	uxfs_diradd(dip, (char *)dentry->d_name.name, inum);
 
 	inode->i_uid = current_fsuid();
 	inode->i_gid =
@@ -265,7 +265,7 @@ int uxfs_mkdir(struct inode *dip, struct dentry *dentry, umode_t mode)
 	inode->i_private = uxfs_i(inode);	//initialize private, again!
 	set_nlink(inode, 2);
 
-	nip = (struct uxfs_inode *) inode->i_private;
+	nip = (struct uxfs_inode *)inode->i_private;
 	nip->i_mode = mode | S_IFDIR;
 	nip->i_nlink = 2;
 	nip->i_atime = nip->i_ctime = nip->i_mtime = CURRENT_TIME.tv_sec;
@@ -281,7 +281,7 @@ int uxfs_mkdir(struct inode *dip, struct dentry *dentry, umode_t mode)
 	nip->i_addr[0] = blk;
 	bh = sb_bread(sb, blk);
 	memset(bh->b_data, 0, UXFS_BSIZE);
-	dirent = (struct uxfs_dirent *) bh->b_data;
+	dirent = (struct uxfs_dirent *)bh->b_data;
 	dirent->d_ino = inum;
 	strcpy(dirent->d_name, ".");
 	dirent++;
@@ -310,7 +310,7 @@ int uxfs_mkdir(struct inode *dip, struct dentry *dentry, umode_t mode)
 int uxfs_rmdir(struct inode *dip, struct dentry *dentry)
 {
 	struct super_block *sb = dip->i_sb;
-	struct uxfs_fs *fs = (struct uxfs_fs *) sb->s_fs_info;
+	struct uxfs_fs *fs = (struct uxfs_fs *)sb->s_fs_info;
 	struct uxfs_superblock *usb = fs->u_sb;
 	struct inode *inode = dentry->d_inode;
 	struct uxfs_inode *uip = (struct uxfs_inode *)
@@ -324,10 +324,10 @@ int uxfs_rmdir(struct inode *dip, struct dentry *dentry)
 	 * Remove the entry from the parent directory
 	 */
 
-	inum = uxfs_find_entry(dip, (char *) dentry->d_name.name);
+	inum = uxfs_find_entry(dip, (char *)dentry->d_name.name);
 	if (!inum)
 		return -ENOTDIR;
-	uxfs_dirdel(dip, (char *) dentry->d_name.name);
+	uxfs_dirdel(dip, (char *)dentry->d_name.name);
 
 	/*
 	 * Clean up the inode
@@ -364,7 +364,7 @@ struct dentry *uxfs_lookup(struct inode *dip, struct dentry *dentry,
 	if (dentry->d_name.len > UXFS_NAMELEN)
 		return ERR_PTR(-ENAMETOOLONG);
 
-	inum = uxfs_find_entry(dip, (char *) dentry->d_name.name);
+	inum = uxfs_find_entry(dip, (char *)dentry->d_name.name);
 	if (inum) {
 		inode = uxfs_iget(dip->i_sb, inum);
 		if (!inode)
@@ -408,7 +408,7 @@ int uxfs_unlink(struct inode *dip, struct dentry *dentry)
 {
 	struct inode *inode = dentry->d_inode;
 
-	uxfs_dirdel(dip, (char *) dentry->d_name.name);
+	uxfs_dirdel(dip, (char *)dentry->d_name.name);
 	inode_dec_link_count(inode);
 	mark_inode_dirty(inode);	//more redundancy,
 	return 0;
