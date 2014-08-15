@@ -14,7 +14,7 @@
 #include "uxfs.h"
 
 MODULE_AUTHOR
-("Steve Pate <spate@veritas.com>, Wilson Felipe <wfelipe@gmail.com>");
+    ("Steve Pate <spate@veritas.com>, Wilson Felipe <wfelipe@gmail.com>");
 MODULE_DESCRIPTION("A primitive filesystem for Linux");
 MODULE_LICENSE("GPL");
 
@@ -33,7 +33,7 @@ int uxfs_find_entry(struct inode *dip, char *name)
 
 	for (blk = 0; blk < uxi->uip.i_blocks; blk++) {
 		bh = sb_bread(sb, uxi->uip.i_addr[blk]);
-		dirent = (struct uxfs_dirent *)bh->b_data;
+		dirent = (struct uxfs_dirent *) bh->b_data;
 		for (i = 0; i < UXFS_DIRS_PER_BLOCK; i++) {
 			if (strcmp(dirent->d_name, name) == 0) {
 				brelse(bh);
@@ -83,7 +83,7 @@ struct inode *uxfs_iget(struct super_block *sb, unsigned long ino)
 		return ERR_PTR(-EIO);
 	}
 
-	di = (struct uxfs_inode *)(bh->b_data);
+	di = (struct uxfs_inode *) (bh->b_data);
 	inode->i_mode = di->i_mode;
 	if (di->i_mode & S_IFDIR) {
 		inode->i_mode |= S_IFDIR;
@@ -155,13 +155,14 @@ void uxfs_destroy_inode(struct inode *inode)
 	unsigned long inum = inode->i_ino;
 	struct uxfs_inode_info *uxi = uxfs_i(inode);
 	struct super_block *sb = inode->i_sb;
-	struct uxfs_fs *fs = (struct uxfs_fs *)sb->s_fs_info;
+	struct uxfs_fs *fs = (struct uxfs_fs *) sb->s_fs_info;
 	struct uxfs_superblock *usb = fs->u_sb;
 	int i;
 
 	usb->s_nbfree += uxi->uip.i_blocks;
 	for (i = 0; i < uxi->uip.i_blocks; i++) {
-		usb->s_block[uxi->uip.i_addr[i]-UXFS_FIRST_DATA_BLOCK] = UXFS_BLOCK_FREE;
+		usb->s_block[uxi->uip.i_addr[i] - UXFS_FIRST_DATA_BLOCK] =
+		    UXFS_BLOCK_FREE;
 		uxi->uip.i_addr[i] = UXFS_BLOCK_FREE;
 	}
 	usb->s_inode[inum] = UXFS_INODE_FREE;
@@ -178,7 +179,7 @@ void uxfs_destroy_inode(struct inode *inode)
 
 void uxfs_put_super(struct super_block *s)
 {
-	struct uxfs_fs *fs = (struct uxfs_fs *)s->s_fs_info;
+	struct uxfs_fs *fs = (struct uxfs_fs *) s->s_fs_info;
 	struct buffer_head *bh = fs->u_sbh;
 
 	/*
@@ -196,7 +197,7 @@ void uxfs_put_super(struct super_block *s)
 int uxfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 {
 	struct super_block *sb = dentry->d_sb;
-	struct uxfs_fs *fs = (struct uxfs_fs *)sb->s_fs_info;
+	struct uxfs_fs *fs = (struct uxfs_fs *) sb->s_fs_info;
 	struct uxfs_superblock *usb = fs->u_sb;
 
 	buf->f_type = UXFS_MAGIC;
@@ -220,11 +221,11 @@ int uxfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 
 void uxfs_write_super(struct super_block *sb)
 {
-	struct uxfs_fs *fs = (struct uxfs_fs *)sb->s_fs_info;
+	struct uxfs_fs *fs = (struct uxfs_fs *) sb->s_fs_info;
 	struct buffer_head *bh = fs->u_sbh;
 
 	if (!(sb->s_flags & MS_RDONLY))
-	  mark_buffer_dirty(bh);
+		mark_buffer_dirty(bh);
 
 	sb->s_dirt = 0;
 }
@@ -234,8 +235,9 @@ static struct kmem_cache *uxfs_inode_cachep;
 struct inode *uxfs_alloc_inode(struct super_block *sb)
 {
 	struct uxfs_inode_info *ui;
-	
-	ui = (struct uxfs_inode_info *) kmem_cache_alloc(uxfs_inode_cachep, GFP_KERNEL);
+
+	ui = (struct uxfs_inode_info *) kmem_cache_alloc(uxfs_inode_cachep,
+							 GFP_KERNEL);
 	return &ui->vfs_inode;
 }
 
@@ -255,7 +257,9 @@ int uxfs_fill_super(struct super_block *sb, void *data, int silent)
 	struct buffer_head *bh;
 	struct inode *inode;
 
-	sb_set_blocksize(sb, (sizeof(struct uxfs_superblock)/512 + 1) * UXFS_BSIZE);
+	sb_set_blocksize(sb,
+			 (sizeof(struct uxfs_superblock) / 512 +
+			  1) * UXFS_BSIZE);
 	bh = sb_bread(sb, 0);
 	if (!bh)
 		return -ENOMEM;
@@ -264,10 +268,11 @@ int uxfs_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_blocksize = UXFS_BSIZE;
 	sb->s_blocksize_bits = UXFS_BSIZE_BITS;
 
-	usb = (struct uxfs_superblock *)bh->b_data;
+	usb = (struct uxfs_superblock *) bh->b_data;
 	if (usb->s_magic != UXFS_MAGIC) {
 		if (!silent)
-			printk(KERN_ERR "Unable to find uxfs filesystem\n");
+			printk(KERN_ERR
+			       "Unable to find uxfs filesystem\n");
 		return -EINVAL;
 	}
 	if (usb->s_mod == UXFS_FSDIRTY) {
@@ -292,9 +297,9 @@ int uxfs_fill_super(struct super_block *sb, void *data, int silent)
 	inode = uxfs_iget(sb, UXFS_ROOT_INO);
 	if (!inode)
 		return -ENOMEM;
-	sb->s_root = d_alloc_root(inode); //changed from d_make_root(inode) for kernel version 3.2. change back to d_alloc_root for kernal versions > 3.4
-	if (!sb->s_root) {  
-	  iput(inode); //redundant line of code if d_make_root is used
+	sb->s_root = d_alloc_root(inode);	//changed from d_make_root(inode) for kernel version 3.2. change back to d_alloc_root for kernal versions > 3.4
+	if (!sb->s_root) {
+		iput(inode);	//redundant line of code if d_make_root is used
 		return -EINVAL;
 	}
 
@@ -306,7 +311,8 @@ int uxfs_fill_super(struct super_block *sb, void *data, int silent)
 }
 
 static struct dentry *uxfs_mount(struct file_system_type *fs_type,
-			       int flags, const char *dev_name, void *data)
+				 int flags, const char *dev_name,
+				 void *data)
 {
 	return mount_bdev(fs_type, flags, dev_name, data, uxfs_fill_super);
 }
@@ -329,9 +335,10 @@ static void init_once(void *foo)
 static int __init init_uxfs_fs(void)
 {
 	uxfs_inode_cachep = kmem_cache_create("uxfs_inode_cache",
-					      sizeof(struct uxfs_inode_info),
-					      0, (SLAB_RECLAIM_ACCOUNT|
-						  SLAB_MEM_SPREAD),
+					      sizeof(struct
+						     uxfs_inode_info), 0,
+					      (SLAB_RECLAIM_ACCOUNT |
+					       SLAB_MEM_SPREAD),
 					      init_once);
 	return register_filesystem(&uxfs_fs_type);
 }
@@ -342,4 +349,4 @@ static void __exit exit_uxfs_fs(void)
 }
 
 module_init(init_uxfs_fs)
-module_exit(exit_uxfs_fs)
+    module_exit(exit_uxfs_fs)

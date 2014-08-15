@@ -10,18 +10,19 @@
 struct file_operations uxfs_file_operations = {
 	.llseek = generic_file_llseek,
 	.read = do_sync_read,
-	.aio_read = generic_file_aio_read, //added 
-	.write = do_sync_write, 
-	.aio_write = generic_file_aio_write, //added
+	.aio_read = generic_file_aio_read,	//added 
+	.write = do_sync_write,
+	.aio_write = generic_file_aio_write,	//added
 	.mmap = generic_file_mmap,
-	.splice_read = generic_file_splice_read, //added
+	.splice_read = generic_file_splice_read,	//added
 };
 
 int uxfs_get_block(struct inode *inode,
-		 sector_t iblock, struct buffer_head *bh_result, int create)
+		   sector_t iblock, struct buffer_head *bh_result,
+		   int create)
 {
 	struct super_block *sb = inode->i_sb;
-	struct uxfs_inode *uip = (struct uxfs_inode *)inode->i_private;
+	struct uxfs_inode *uip = (struct uxfs_inode *) inode->i_private;
 	__u32 blk;
 
 	/*
@@ -47,7 +48,7 @@ int uxfs_get_block(struct inode *inode,
 		uip->i_size = inode->i_size;
 		mark_inode_dirty(inode);
 	}
-	bh_result->b_bdev = sb->s_bdev; //changed from inode->i_bdev (which was null and stupid)
+	bh_result->b_bdev = sb->s_bdev;	//changed from inode->i_bdev (which was null and stupid)
 	bh_result->b_blocknr = uip->i_addr[iblock];
 	bh_result->b_state |= (1UL << BH_Mapped);
 
@@ -65,10 +66,11 @@ int uxfs_readpage(struct file *file, struct page *page)
 }
 
 int uxfs_write_begin(struct file *file, struct address_space *mapping,
-		   loff_t pos, unsigned len, unsigned flags,
-		   struct page **pagep, void **fsdata)
+		     loff_t pos, unsigned len, unsigned flags,
+		     struct page **pagep, void **fsdata)
 {
-	return block_write_begin(file->f_mapping, pos, len, flags, pagep, uxfs_get_block);
+	return block_write_begin(file->f_mapping, pos, len, flags, pagep,
+				 uxfs_get_block);
 }
 
 sector_t uxfs_bmap(struct address_space * mapping, sector_t block)

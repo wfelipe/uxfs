@@ -17,7 +17,7 @@
 
 ino_t uxfs_ialloc(struct super_block *sb)
 {
-	struct uxfs_fs *fs = (struct uxfs_fs *)sb->s_fs_info;
+	struct uxfs_fs *fs = (struct uxfs_fs *) sb->s_fs_info;
 	struct uxfs_superblock *usb = fs->u_sb;
 	int i;
 
@@ -33,7 +33,8 @@ ino_t uxfs_ialloc(struct super_block *sb)
 			return i;
 		}
 	}
-	printk(KERN_ERR "uxfs: uxfs_ialloc - We should never reach here\n");
+	printk(KERN_ERR
+	       "uxfs: uxfs_ialloc - We should never reach here\n");
 	return 0;
 }
 
@@ -44,7 +45,7 @@ ino_t uxfs_ialloc(struct super_block *sb)
 
 __u32 uxfs_block_alloc(struct super_block * sb)
 {
-	struct uxfs_fs *fs = (struct uxfs_fs *)sb->s_fs_info;
+	struct uxfs_fs *fs = (struct uxfs_fs *) sb->s_fs_info;
 	struct uxfs_superblock *usb = fs->u_sb;
 	int i;
 

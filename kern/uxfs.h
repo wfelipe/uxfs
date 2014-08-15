@@ -12,11 +12,11 @@ extern struct file_operations uxfs_file_operations;
 #define UXFS_DIRS_PER_BLOCK	16
 #define UXFS_DIRECT_BLOCKS	16
 #define UXFS_MAXFILES		32
-#define UXFS_MAXBLOCKS		460 //changed to 460 so the superblock is not bigger than a block
+#define UXFS_MAXBLOCKS		460	//changed to 460 so the superblock is not bigger than a block
 #define UXFS_FIRST_DATA_BLOCK	50
 #define UXFS_BSIZE		512
 #define UXFS_BSIZE_BITS		9
-#define UXFS_MAGIC		0x58494e55 // UNIX
+#define UXFS_MAGIC		0x58494e55	// UNIX
 #define UXFS_INODE_BLOCK		8
 #define UXFS_ROOT_INO		2
 
@@ -28,13 +28,13 @@ extern struct file_operations uxfs_file_operations;
  * data blocks is fixed.
  */
 
-struct uxfs_superblock { //made smaller using chars so it fits in a block
-  __u32 s_magic;
-  __u32 s_mod;
-  __u32 s_nifree;
-  char s_inode[UXFS_MAXFILES]; //changed to char from __u32
-  __u32 s_nbfree;
-  char s_block[UXFS_MAXBLOCKS]; //changed to char from __u32
+struct uxfs_superblock {	//made smaller using chars so it fits in a block
+	__u32 s_magic;
+	__u32 s_mod;
+	__u32 s_nifree;
+	char s_inode[UXFS_MAXFILES];	//changed to char from __u32
+	__u32 s_nbfree;
+	char s_block[UXFS_MAXBLOCKS];	//changed to char from __u32
 };
 
 /*
@@ -111,7 +111,7 @@ struct inode *uxfs_iget(struct super_block *, unsigned long);
 
 static inline struct uxfs_inode_info *uxfs_i(struct inode *inode)
 {
-        return container_of(inode, struct uxfs_inode_info, vfs_inode);
+	return container_of(inode, struct uxfs_inode_info, vfs_inode);
 }
 
 #endif

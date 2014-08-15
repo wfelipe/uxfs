@@ -49,14 +49,16 @@ void print_inode(int inum, struct uxfs_inode *uip)
 	if (uip->i_mode & S_IFDIR) {
 		printf("\n\n  Directory entries:\n");
 		for (i = 0; i < uip->i_blocks; i++) {
-			lseek(devfd, uip->i_addr[i] * UXFS_BSIZE, SEEK_SET);
+			lseek(devfd, uip->i_addr[i] * UXFS_BSIZE,
+			      SEEK_SET);
 			read(devfd, buf, UXFS_BSIZE);
-			dirent = (struct uxfs_dirent *)buf;
+			dirent = (struct uxfs_dirent *) buf;
 			for (x = 0; x < UXFS_DIRECT_BLOCKS; x++) {
 				if (dirent->d_ino != 0) {
 					printf("    inum[%2d],"
 					       "name[%s]\n",
-					       dirent->d_ino, dirent->d_name);
+					       dirent->d_ino,
+					       dirent->d_name);
 				}
 				dirent++;
 			}
@@ -69,10 +71,11 @@ void print_inode(int inum, struct uxfs_inode *uip)
 int read_inode(ino_t inum, struct uxfs_inode *uip)
 {
 	if (sb.s_inode[inum] == UXFS_INODE_FREE) {
-	  printf("WARNING: INODE LISTED AS FREE IN SB\n");
+		printf("WARNING: INODE LISTED AS FREE IN SB\n");
 	}
-	lseek(devfd, (UXFS_INODE_BLOCK * UXFS_BSIZE) + (inum * UXFS_BSIZE), SEEK_SET);
-	read(devfd, (char *)uip, sizeof(struct uxfs_inode));
+	lseek(devfd, (UXFS_INODE_BLOCK * UXFS_BSIZE) + (inum * UXFS_BSIZE),
+	      SEEK_SET);
+	read(devfd, (char *) uip, sizeof(struct uxfs_inode));
 
 	return 0;
 }
@@ -94,7 +97,7 @@ int main(int argc, char **argv)
 	 * Read in and validate the superblock
 	 */
 
-	read(devfd, (char *)&sb, sizeof(struct uxfs_superblock));
+	read(devfd, (char *) &sb, sizeof(struct uxfs_superblock));
 	if (sb.s_magic != UXFS_MAGIC) {
 		printf("This is not a uxfs filesystem\n");
 		exit(1);
@@ -121,14 +124,14 @@ int main(int argc, char **argv)
 			printf("  s_nbfree  = %d\n\n", sb.s_nbfree);
 		}
 		if (command[0] == 'd') {
-		  inum = atoi(&command[1]);
-		  printf("block number requested: %d\n", inum);
-		  lseek(devfd, inum * UXFS_BSIZE, SEEK_SET);
-		  read(devfd, &dataText, UXFS_BSIZE);
-		  if(!dataText[0])
-		    printf("Data block empty\n");
-		  else
-		    printf("Data: \n %s \n", dataText);
+			inum = atoi(&command[1]);
+			printf("block number requested: %d\n", inum);
+			lseek(devfd, inum * UXFS_BSIZE, SEEK_SET);
+			read(devfd, &dataText, UXFS_BSIZE);
+			if (!dataText[0])
+				printf("Data block empty\n");
+			else
+				printf("Data: \n %s \n", dataText);
 		}
 	}
 }
