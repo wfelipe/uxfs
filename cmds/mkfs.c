@@ -41,6 +41,14 @@ int main(int argc, char **argv)
 	}
 	lseek(devfd, 0, SEEK_SET);
 
+	/*added to initialize every block on the device to 0 before writing anything to the device */
+	memset((void *)&block, 0, UXFS_BSIZE);
+	for (i = 0; i < UXFS_MAXBLOCKS; i++) {
+		write(devfd, block, UXFS_BSIZE);
+	}
+
+	lseek(devfd, 0, SEEK_SET);
+
 	/*
 	 * Fill in the fields of the superblock and write
 	 * it out to the first block of the device.
@@ -104,8 +112,9 @@ int main(int argc, char **argv)
 	inode.i_blocks = 1;
 	inode.i_addr[0] = UXFS_FIRST_DATA_BLOCK;
 
-	lseek(devfd, UXFS_INODE_BLOCK * UXFS_BSIZE + 1024, SEEK_SET);
-	write(devfd, (char *)&inode, sizeof(struct uxfs_superblock));
+	lseek(devfd, (UXFS_INODE_BLOCK + UXFS_ROOT_INO) * UXFS_BSIZE,
+	      SEEK_SET);
+	write(devfd, (char *)&inode, sizeof(struct uxfs_inode));
 
 	memset((void *)&inode, 0, sizeof(struct uxfs_inode));
 	inode.i_mode = S_IFDIR | 0755;
@@ -119,8 +128,9 @@ int main(int argc, char **argv)
 	inode.i_blocks = 1;
 	inode.i_addr[0] = UXFS_FIRST_DATA_BLOCK + 1;
 
-	lseek(devfd, UXFS_INODE_BLOCK * UXFS_BSIZE + 1536, SEEK_SET);
-	write(devfd, (char *)&inode, sizeof(struct uxfs_superblock));
+	lseek(devfd, (UXFS_INODE_BLOCK + UXFS_ROOT_INO + 1) * UXFS_BSIZE,
+	      SEEK_SET);
+	write(devfd, (char *)&inode, sizeof(struct uxfs_inode));
 
 	/*
 	 * Fill in the directory entries for root 
@@ -144,11 +154,13 @@ int main(int argc, char **argv)
 	 * Fill in the directory entries for lost+found 
 	 */
 
-	lseek(devfd, UXFS_FIRST_DATA_BLOCK * UXFS_BSIZE + UXFS_BSIZE, SEEK_SET);
+	lseek(devfd, UXFS_FIRST_DATA_BLOCK * UXFS_BSIZE + UXFS_BSIZE,
+	      SEEK_SET);
 	memset((void *)&block, 0, UXFS_BSIZE);
 	write(devfd, block, UXFS_BSIZE);
-	lseek(devfd, UXFS_FIRST_DATA_BLOCK * UXFS_BSIZE + UXFS_BSIZE, SEEK_SET);
-	dir.d_ino = 2;
+	lseek(devfd, UXFS_FIRST_DATA_BLOCK * UXFS_BSIZE + UXFS_BSIZE,
+	      SEEK_SET);
+	dir.d_ino = 3;		//THIS IS INODE 3, NOT 2
 	strcpy(dir.d_name, ".");
 	write(devfd, (char *)&dir, sizeof(struct uxfs_dirent));
 	dir.d_ino = 2;

@@ -1,12 +1,15 @@
-obj-$(CONFIG_UXFS_FS) = uxfs.o
+obj-m := uxfs.o
+uxfs-objs := uxfs_dir.o uxfs_alloc.o uxfs_file.o uxfs_inode.o
 
-uxfs-y := uxfs_dir.o uxfs_alloc.o uxfs_file.o uxfs_inode.o
+# obj-$(CONFIG_UXFS_FS) = uxfs.o
 
-KDIR = /lib/modules/$(shell uname -r)/build
-PWD = $(shell pwd)
+# uxfs-y := uxfs_dir.o uxfs_alloc.o uxfs_file.o uxfs_inode.o
 
-default:
-	$(MAKE) -C $(KDIR) M=$(PWD) CONFIG_UXFS_FS=m modules
+# KDIR = /lib/modules/$(shell uname -r)/build
+# PWD = $(shell pwd)
 
-clean:
-	$(MAKE) -C $(KDIR) M=$(PWD) CONFIG_UXFS_FS=m clean
+# default:
+# 	$(MAKE) -C $(KDIR) M=$(PWD) CONFIG_UXFS_FS=m modules
+
+# clean:
+# 	$(MAKE) -C $(KDIR) M=$(PWD) CONFIG_UXFS_FS=m clean

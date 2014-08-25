@@ -14,7 +14,7 @@
 #include "uxfs.h"
 
 MODULE_AUTHOR
-("Steve Pate <spate@veritas.com>, Wilson Felipe <wfelipe@gmail.com>");
+    ("Steve Pate <spate@veritas.com>, Wilson Felipe <wfelipe@gmail.com>");
 MODULE_DESCRIPTION("A primitive filesystem for Linux");
 MODULE_LICENSE("GPL");
 
@@ -104,7 +104,8 @@ struct inode *uxfs_iget(struct super_block *sb, unsigned long ino)
 	inode->i_atime.tv_sec = di->i_atime;
 	inode->i_mtime.tv_sec = di->i_mtime;
 	inode->i_ctime.tv_sec = di->i_ctime;
-	memcpy(&inode->i_private, di, sizeof(struct uxfs_inode));
+	inode->i_private = uxfs_i(inode);
+	memcpy(inode->i_private, di, sizeof(struct uxfs_inode));
 
 	brelse(bh);
 
@@ -122,6 +123,7 @@ int uxfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 	struct uxfs_inode_info *uxi = uxfs_i(inode);
 	struct buffer_head *bh;
 	__u32 blk;
+
 
 	if (ino < UXFS_ROOT_INO || ino > UXFS_MAXFILES) {
 		printk(KERN_ERR "uxfs: Bad inode number %lu\n", ino);
@@ -159,7 +161,8 @@ void uxfs_destroy_inode(struct inode *inode)
 
 	usb->s_nbfree += uxi->uip.i_blocks;
 	for (i = 0; i < uxi->uip.i_blocks; i++) {
-		usb->s_block[uxi->uip.i_addr[i]] = UXFS_BLOCK_FREE;
+		usb->s_block[uxi->uip.i_addr[i] - UXFS_FIRST_DATA_BLOCK] =
+		    UXFS_BLOCK_FREE;
 		uxi->uip.i_addr[i] = UXFS_BLOCK_FREE;
 	}
 	usb->s_inode[inum] = UXFS_INODE_FREE;
@@ -223,6 +226,7 @@ void uxfs_write_super(struct super_block *sb)
 
 	if (!(sb->s_flags & MS_RDONLY))
 		mark_buffer_dirty(bh);
+
 	sb->s_dirt = 0;
 }
 
@@ -232,8 +236,8 @@ struct inode *uxfs_alloc_inode(struct super_block *sb)
 {
 	struct uxfs_inode_info *ui;
 
-	ui = (struct uxfs_inode_info *) kmem_cache_alloc(uxfs_inode_cachep, GFP_KERNEL);
-
+	ui = (struct uxfs_inode_info *)kmem_cache_alloc(uxfs_inode_cachep,
+							GFP_KERNEL);
 	return &ui->vfs_inode;
 }
 
@@ -253,7 +257,9 @@ int uxfs_fill_super(struct super_block *sb, void *data, int silent)
 	struct buffer_head *bh;
 	struct inode *inode;
 
-	sb_set_blocksize(sb, (sizeof(struct uxfs_superblock)/512 + 1) * UXFS_BSIZE);
+	sb_set_blocksize(sb,
+			 (sizeof(struct uxfs_superblock) / 512 +
+			  1) * UXFS_BSIZE);
 	bh = sb_bread(sb, 0);
 	if (!bh)
 		return -ENOMEM;
@@ -265,7 +271,8 @@ int uxfs_fill_super(struct super_block *sb, void *data, int silent)
 	usb = (struct uxfs_superblock *)bh->b_data;
 	if (usb->s_magic != UXFS_MAGIC) {
 		if (!silent)
-			printk(KERN_ERR "Unable to find uxfs filesystem\n");
+			printk(KERN_ERR
+			       "Unable to find uxfs filesystem\n");
 		return -EINVAL;
 	}
 	if (usb->s_mod == UXFS_FSDIRTY) {
@@ -290,9 +297,9 @@ int uxfs_fill_super(struct super_block *sb, void *data, int silent)
 	inode = uxfs_iget(sb, UXFS_ROOT_INO);
 	if (!inode)
 		return -ENOMEM;
-	sb->s_root = d_make_root(inode);
+	sb->s_root = d_alloc_root(inode);	//changed from d_make_root(inode) for kernel version 3.2. change back to d_alloc_root for kernal versions > 3.4
 	if (!sb->s_root) {
-		iput(inode);
+		iput(inode);	//redundant line of code if d_make_root is used
 		return -EINVAL;
 	}
 
@@ -304,7 +311,8 @@ int uxfs_fill_super(struct super_block *sb, void *data, int silent)
 }
 
 static struct dentry *uxfs_mount(struct file_system_type *fs_type,
-			       int flags, const char *dev_name, void *data)
+				 int flags, const char *dev_name,
+				 void *data)
 {
 	return mount_bdev(fs_type, flags, dev_name, data, uxfs_fill_super);
 }
@@ -319,7 +327,7 @@ static struct file_system_type uxfs_fs_type = {
 
 static void init_once(void *foo)
 {
-	struct uxfs_inode_info *ei = (struct uxfs_inode_info *) foo;
+	struct uxfs_inode_info *ei = (struct uxfs_inode_info *)foo;
 
 	inode_init_once(&ei->vfs_inode);
 }
@@ -327,9 +335,10 @@ static void init_once(void *foo)
 static int __init init_uxfs_fs(void)
 {
 	uxfs_inode_cachep = kmem_cache_create("uxfs_inode_cache",
-					      sizeof(struct uxfs_inode_info),
-					      0, (SLAB_RECLAIM_ACCOUNT|
-						  SLAB_MEM_SPREAD),
+					      sizeof(struct
+						     uxfs_inode_info), 0,
+					      (SLAB_RECLAIM_ACCOUNT |
+					       SLAB_MEM_SPREAD),
 					      init_once);
 	return register_filesystem(&uxfs_fs_type);
 }
@@ -340,4 +349,4 @@ static void __exit exit_uxfs_fs(void)
 }
 
 module_init(init_uxfs_fs)
-module_exit(exit_uxfs_fs)
+    module_exit(exit_uxfs_fs)

@@ -33,7 +33,8 @@ ino_t uxfs_ialloc(struct super_block *sb)
 			return i;
 		}
 	}
-	printk(KERN_ERR "uxfs: uxfs_ialloc - We should never reach here\n");
+	printk(KERN_ERR
+	       "uxfs: uxfs_ialloc - We should never reach here\n");
 	return 0;
 }
 
